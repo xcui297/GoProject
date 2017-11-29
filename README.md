@@ -1,6 +1,5 @@
 # GoProject
-
-Group project for 02-601 
+Group project for 02-601 <br>
 This is a simple color calculator for automotive paints.
 
 # Prerequisites for this package:
