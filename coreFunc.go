@@ -19,6 +19,7 @@ type Pigment struct {
   opacity int
   percentSolids int
   price int
+	stock int
 }
 
 // ReadFile read a given csv file and create a Pigment struct for each pigment
@@ -82,6 +83,12 @@ func ReadFile(filename string) (bool,[]Pigment) {
       price, err7 := strconv.Atoi(record[7])
       p.price = price
       if err7 != nil {
+    		return noError, pigments
+    	}
+			l := len(record)
+			stock, err8 := strconv.Atoi(record[l-1])
+      p.stock = stock
+      if err8 != nil {
     		return noError, pigments
     	}
       pigments = append(pigments,p)
