@@ -1,5 +1,7 @@
 # GoProject
+
 Group project for 02-601 
+This is a simple color calculator for automotive paints.
 
 # Prerequisites for this package:
 1. https://github.com/draffensperger/golp
