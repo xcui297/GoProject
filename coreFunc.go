@@ -13,13 +13,37 @@ import (
 type Pigment struct {
   name string
   ID string
-  L float64
-  a float64
-  b float64
+  color Color
   opacity int
   percentSolids int
   price int
-	stock int
+  stock int
+}
+
+type Color struct{
+  r,g,b int
+}
+
+//MixColor takes a slice of pigments and their weights 
+//and returns the mixed new color, as well as the price per gal
+func MixColor(p []Pigment, weight []float64) Color{
+  r := 0.0
+  g := 0.0
+  b := 0.0
+  totalWeight := 0.0
+  totalPrice := 0.0
+  for i := range p{
+    r += float64(p[i].color.r)*weight[i]
+    g += float64(p[i].color.g)*weight[i]
+    b += float64(p[i].color.r)*weight[i]
+    totalWeight += weight[i]
+    totalPrice += p[i].price*weight[i]
+  }
+  r /= totalWeight
+  g /= totalWeight
+  b /= totalWeight
+  totalPrice /= totalWeight
+  return Color{int(r),int(g),int(b)}, totalPrice
 }
 
 // ReadFile read a given csv file and create a Pigment struct for each pigment
