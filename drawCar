@@ -1,0 +1,137 @@
+package drawCar
+
+import(
+  "image/color"
+)
+
+//DrawCar take the body color of the car, write a png picture of the car
+//Note: the input type must be uint8! Convert type before use
+func DrawCar(r,g,b uint8){
+  squarewidth := 4
+  black := MakeColor(35,32,51)
+  mazarine := MakeColor(50,52,66)
+  darkRed := MakeColor(101,37,62)
+  orange := MakeColor(203,94,52)
+  white := MakeColor(255,255,255)
+  lightGrey := MakeColor(220,220,220)
+  darkGrey := MakeColor(150,150,150)
+  bodyColor := MakeColor(r,g,b)
+  lightBodyColor := MakeColor(LightenColor(r),LightenColor(g),LightenColor(b))
+  darkBodyColor := MakeColor(DarkenColor(r,0.9),DarkenColor(g,0.9),DarkenColor(b,0.9))
+  darkestBodyColor := MakeColor(DarkenColor(r,0.8),DarkenColor(g,0.8),DarkenColor(b,0.8))
+  carModel := CreateNewCanvas(squarewidth*40,squarewidth*25)
+  //car roof
+  DrawRectangle(&carModel,bodyColor,0,11,8,24)
+  //rear windshield
+  for j:=6; j<=10;j++{
+    DrawRectangle(&carModel,mazarine,11-j,j,20-j,j)
+  }
+  // front windshield
+  for j:=25; j<=29;j++{
+    DrawRectangle(&carModel,mazarine,j-24,j,j-14,j)
+  }
+  //dark color
+  for i:=10; i<=15; i++{
+    DrawRectangle(&carModel,darkBodyColor,i,21-i,i,i+14)
+  }
+  DrawRectangle(&carModel,darkBodyColor,16,0,21,39)
+  //trail
+  DrawRectangle(&carModel,bodyColor,6,1,6,5)
+  DrawRectangle(&carModel,bodyColor,7,0,14,5)
+  DrawSquare(&carModel,bodyColor,15,0)
+  //headstock
+  for i:=0;i<3;i++{
+    DrawRectangle(&carModel,bodyColor,6+i,30,6+i,36+i)
+  }
+  DrawRectangle(&carModel,bodyColor,9,30,14,39)
+  DrawRectangle(&carModel,bodyColor,15,38,15,39)
+  DrawRectangle(&carModel,bodyColor,16,39,17,39)
+  //windows
+  for i:=11; i<=15;i++{
+    DrawRectangle(&carModel,black,i,22-i,i,17)
+    DrawRectangle(&carModel,black,i,19,i,i+13)
+  }
+  //dark grey
+  DrawRectangle(&carModel,darkGrey,22,0,23,39)
+  DrawRectangle(&carModel,darkGrey,24,1,24,38)
+  DrawSquare(&carModel,darkGrey,21,39)
+  //wheels
+  DrawRectangle(&carModel,black,20,4,20,7)
+  DrawRectangle(&carModel,black,21,3,22,8)
+  DrawRectangle(&carModel,black,23,4,23,7)
+  DrawRectangle(&carModel,black,20,31,20,34)
+  DrawRectangle(&carModel,black,21,30,22,35)
+  DrawRectangle(&carModel,black,23,31,23,34)
+  //light Color
+  DrawRectangle(&carModel,lightBodyColor,9,11,9,24)
+  DrawRectangle(&carModel,lightBodyColor,15,1,15,5)
+  DrawRectangle(&carModel,lightBodyColor,15,27,15,28)
+  DrawRectangle(&carModel,lightBodyColor,15,30,15,37)
+  DrawSquare(&carModel,lightBodyColor,16,0)
+  DrawSquare(&carModel,lightBodyColor,16,38)
+  //darkest Color
+  DrawRectangle(&carModel,darkestBodyColor,16,18,21,18)
+  DrawRectangle(&carModel,darkestBodyColor,17,20,17,21)
+  DrawRectangle(&carModel,darkestBodyColor,17,27,17,29)
+  DrawRectangle(&carModel,darkestBodyColor,18,28,19,28)
+  DrawRectangle(&carModel,darkestBodyColor,20,27,21,27)
+  DrawRectangle(&carModel,darkestBodyColor,16,6,17,6)
+  DrawSquare(&carModel,darkestBodyColor,26,16)
+  DrawSquare(&carModel,darkestBodyColor,28,16)
+  for i:=18; i<=21; i++{
+    DrawSquare(&carModel,darkestBodyColor,i,i-11)
+  }
+  //light grey
+  DrawSquare(&carModel,lightGrey,8,39)
+  //lights
+  DrawRectangle(&carModel,darkRed,18,0,18,1)
+  DrawSquare(&carModel,darkRed,19,0)
+  DrawRectangle(&carModel,white,18,37,18,38)
+  DrawSquare(&carModel,white,17,38)
+  DrawSquare(&carModel,orange,20,0)
+  DrawSquare(&carModel,orange,19,38)
+  DrawSquare(&carModel,orange,20,0)
+  carModel.SaveToPNG("car.png")
+}
+
+//Min takes two numbers and returns the minimum
+func Min(a,b float64) float64{
+  if a<b{
+    return a
+  }else{
+    return b
+  }
+}
+
+//LightenColor takes one channel of a color and returns a lighter channel
+func LightenColor(channel uint8) uint8{
+  return uint8(Min(float64(channel)*1.1,255))
+}
+
+//DarkenColor takes one channel of a color and returns a darker channel according to the degree
+func DarkenColor(channel uint8, degree float64) uint8{
+  return uint8(float64(channel)*degree)
+}
+
+//DrawRectangle (Canvas,color.Color,int,int) takes a Canvas, the color,
+// the start row and col, the end row and col
+//and draws a rectangle of the given color in the Canvas
+func DrawRectangle(picture *Canvas, color color.Color, startRow, startCol, endRow, endCol int){
+  squarewidth := 4
+  (*picture).SetFillColor(color)
+  x1, y1 := startCol*squarewidth, startRow*squarewidth
+  x2, y2 := (endCol+1)*squarewidth, (endRow+1)*squarewidth
+  (*picture).ClearRect(x1, y1, x2, y2)
+}
+
+
+//DrawSquare(Canvas,color.Color,int,int) takes a Canvas, the color of the square,
+// the col and row of the square
+//and draws a square of size 2 as the given color in the Canvas at col and row
+func DrawSquare(picture *Canvas, color color.Color, col, row int) {
+  squarewidth := 4
+  (*picture).SetFillColor(color)
+	x1, y1 := row*squarewidth, col*squarewidth
+	x2, y2 := x1+squarewidth, y1+squarewidth
+	(*picture).ClearRect(x1, y1, x2, y2)
+}
