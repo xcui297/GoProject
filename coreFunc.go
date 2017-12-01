@@ -435,6 +435,48 @@ func MixColor(p []Pigment, weight []float64) (Paint, float64) {
 }
 
 /*==============================================================================
+ * 5.available color range
+ *
+ *============================================================================*/
+//MaxAndMinChannle returns the maximum R,G,B value and the minimum R,G,B value
+//of a slice of pigments
+func MaxAndMinChannle(p []Pigment)(int,int,int,int,int,int){
+  maxR := 0
+  maxG := 0
+  maxB := 0
+  minR := 255
+  minG := 255
+  minB := 255
+  for _,pigment:=range p{
+    maxR = MaxInt(pigment.R,maxR)
+    maxG = MaxInt(pigment.G,maxG)
+    maxB = MaxInt(pigment.B,maxB)
+    minR = MinInt(pigment.R,minR)
+    minG = MinInt(pigment.G,minG)
+    minB = MinInt(pigment.B,minB)
+  }
+  return maxR,maxG,maxB,minR,minG,minB
+}
+
+//MaxInt takes two integers and returns the maximum
+func MaxInt(a,b int)int{
+  if a>b{
+    return a
+  }else{
+    return b
+  }
+}
+
+//MaxInt takes two integers and returns the minimum
+func MinInt(a,b int)int{
+  if a>b{
+    return b
+  }else{
+    return a
+  }
+}
+
+/*==============================================================================
  * main for test
  *
  *============================================================================*/
