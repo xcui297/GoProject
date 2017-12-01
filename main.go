@@ -4,6 +4,7 @@ import (
     "github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/widgets"
 	"os"
+	"strconv"
 )
 
 var (
@@ -11,28 +12,31 @@ var (
     helpWindow *widgets.QMainWindow
     helpMainWidget *widgets.QWidget
 	mixColorWindow *widgets.QMainWindow
+	mixColorOutputWindow *widgets.QMainWindow
+	mixColorOutputMainWidget *widgets.QWidget
+	mixColorOutputLayout *widgets.QVBoxLayout
 	offColorWindow *widgets.QMainWindow
+	colorRangeWindow *widgets.QMainWindow
 	repositoryLoaded bool
 	repositoryFileName string
 	repository []Pigment
+	func1Exists bool
+	func1InStock bool
+	func1Composition []Component
 )
 
 func main() {
 	// Create application
 	app := widgets.NewQApplication(len(os.Args), os.Args)
 	// Create index window. The following buttons connect to other windows
-	helpButton, loadButton, function1Button, function2Button, _, _ := CreateIndexWindow()
-    helpButton.ConnectClicked(func(_ bool) { openHelp() })
-    loadButton.ConnectClicked(func(_ bool) { openFile() })
-	
+	CreateIndexWindow()
 	repositoryLoaded = false
 	// Create help window
     CreateHelpWindow()
-	// Create the mix color window
+	// Create the mix color window and the potential output window
 	CreateMixColorWindow()
 	CreateOffColorWindow()
-	function1Button.ConnectClicked(func(_ bool) { openFunction(mixColorWindow) } )
-	function2Button.ConnectClicked(func(_ bool) { openFunction(offColorWindow) })
+	CreateColorRangeWindow()
 	// Show the index window
 	indexWindow.Show()
 	// Execute app
@@ -51,7 +55,7 @@ func openFile() {
 	}
 }
 
-func CreateIndexWindow() (*widgets.QPushButton, *widgets.QPushButton, *widgets.QPushButton, *widgets.QPushButton, *widgets.QPushButton, *widgets.QPushButton)  {
+func CreateIndexWindow() {
 	// Create index window
     indexWindow = widgets.NewQMainWindow(nil,0)
     indexWindow.SetWindowTitle("Automobile paint calculator")
@@ -78,7 +82,9 @@ func CreateIndexWindow() (*widgets.QPushButton, *widgets.QPushButton, *widgets.Q
 	controlLayout.SetContentsMargins(0, 0, 0, 0)
     // Create control panel with help button and load repository function
     helpButton := widgets.NewQPushButton2("Help", nil)
+	helpButton.ConnectClicked(func(_ bool) { openHelp() })
 	loadButton := widgets.NewQPushButton2("Load repository", nil)
+    loadButton.ConnectClicked(func(_ bool) { openFile() })
 	// Add help and load buttons to control panel layout
     controlLayout.AddWidget(helpButton, 0, 0)
     controlLayout.AddWidget(loadButton, 0, 0)
@@ -90,8 +96,14 @@ func CreateIndexWindow() (*widgets.QPushButton, *widgets.QPushButton, *widgets.Q
     majorFunctionsBox.SetLayout(functionsLayout)
     // Create buttons for the 3 main functions, and add them to the layout
     function1Button := widgets.NewQPushButton2("1. Mix target color", majorFunctionsBox)
+	function1Button.ConnectClicked(func(_ bool) { openFunction(mixColorWindow) } )
+
     function2Button := widgets.NewQPushButton2("2. Off-color hits", majorFunctionsBox)
+	function2Button.ConnectClicked(func(_ bool) { openFunction(offColorWindow) })
+	
     function3Button := widgets.NewQPushButton2("3. Color range", majorFunctionsBox)
+	function3Button.ConnectClicked(func(_ bool) { openFunction(colorRangeWindow) })
+	
     functionsLayout.AddWidget(function1Button, 0, 0)
     functionsLayout.AddWidget(function2Button, 0, 0)
     functionsLayout.AddWidget(function3Button, 0, 0)
@@ -108,7 +120,6 @@ func CreateIndexWindow() (*widgets.QPushButton, *widgets.QPushButton, *widgets.Q
     indexLayout.AddWidget(toolkitBox, 0, 0)
 	//Set index main widget as the central widget of the index window
 	indexWindow.SetCentralWidget(indexMainWidget)
-	return helpButton, loadButton, function1Button, function2Button, function3Button, colorVisualizeButton
 }
 
 func CreateHelpWindow() {
@@ -265,6 +276,7 @@ func CreateMixColorWindow() {
 	
 }
 
+
 func CreateOffColorWindow() {
 	offColorWindow = widgets.NewQMainWindow(nil, 0)
 	offColorWindow.SetWindowTitle("Off-color hits")
@@ -373,6 +385,36 @@ func CreateOffColorWindow() {
 	layout.AddWidget(backButton, 0, 0)
 }
 
+func CreateColorRangeWindow() {
+	colorRangeWindow = widgets.NewQMainWindow(nil, 0)
+	colorRangeWindow.SetWindowTitle("Color range")
+	colorRangeWindow.SetMinimumSize2(500,500)
+	colorRangeWindow.SetMaximumSize2(500,500)
+	mainWidget := widgets.NewQWidget(nil, 0)
+	layout := widgets.NewQVBoxLayout()
+	mainWidget.SetLayout(layout)
+	colorRangeWindow.SetCentralWidget(mainWidget)
+	// Create instruction textbox
+	instructionTextContent := "The function takes the current repository of pigments listed within it and return"+
+	" the entire range of color able to be achieved."
+    instructionText := widgets.NewQLabel(nil, 0)
+    instructionText.SetWordWrap(true)
+    instructionText.SetText(instructionTextContent)
+	// Create load repository button
+	loadButton := widgets.NewQPushButton2("Load repository", nil)
+	loadButton.ConnectClicked(func(_ bool) { openFile() })
+	// Create report color range button
+	rangeButton := widgets.NewQPushButton2("Color range", nil)
+	rangeButton.ConnectClicked(func(_ bool) { colorRange() })
+	// Create back button (go back to index window)
+	backButton := widgets.NewQPushButton2("Back", nil)
+	backButton.ConnectClicked(func(_ bool) { backToIndexFromFunction(colorRangeWindow) } )
+	layout.AddWidget(instructionText, 0, 0)
+	layout.AddWidget(loadButton, 0, 0)
+	layout.AddWidget(rangeButton, 0, 0)
+	layout.AddWidget(backButton, 0, 0)
+}
+
 func CreateQuestionLayout(questionContent string) (*widgets.QHBoxLayout, *widgets.QPushButton) {
     // This function is to create a box containing a question and a question mark button
     // that directs to the answer when clicked, for the help window
@@ -442,18 +484,128 @@ func backToIndexFromFunction(functionWindow *widgets.QMainWindow) {
 	indexWindow.Show()
 }
 
+func backToMixFromResults() {
+	mixColorWindow.Show()
+	mixColorOutputWindow.Hide()
+}
+
 func mixColor(redSpinBox, greenSpinBox, blueSpinBox *widgets.QSpinBox, quantitySpinBox *widgets.QDoubleSpinBox) {
 	if !repositoryLoaded {
 		noFileErrorMessage := "Sorry! You have not uploaded a valid repository file."
 		widgets.QMessageBox_Information(nil, "OK", noFileErrorMessage,
 		widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
-	} /*else{
-		// Get RGB value from the boxes
+	} else{
+		// Get RGB and required quantity value from the boxes
 		targetR := redSpinBox.Value()
 		targetG := greenSpinBox.Value()
 		targetB := blueSpinBox.Value()
 		quantityRequired := quantitySpinBox.Value()
-	}*/
+		func1Exists = false
+		func1InStock = false
+		func1Composition = []Component{}
+		repositoryLoaded, repository = ReadFile(repositoryFileName)
+		func1Exists, func1InStock, func1Composition = FindComponents(targetR, targetG, targetB, quantityRequired, repository)
+		ShowMixColorDialog(func1Exists, func1InStock, func1Composition)
+		
+		targetRstring := strconv.FormatBool(func1Exists)
+		widgets.QMessageBox_Information(nil, "OK", targetRstring,
+		widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+		//CreateMixColorOutputWindow(func1Exists, func1InStock, func1Composition)
+		//mixColorOutputWindow.Show()
+		//mixColorWindow.Hide()
+	}
+}
+
+func CreateMixColorOutputWindow(exists, inStock bool, composition []Component) {
+	mixColorOutputWindow = widgets.NewQMainWindow(nil, 0)
+	mixColorOutputWindow.SetWindowTitle("Mix target color results")
+	mixColorOutputWindow.SetMinimumSize2(500,500)
+	//mixColorOutputWindow.SetMaximumSize2(500,500)
+	mixColorOutputMainWidget = widgets.NewQWidget(nil, 0)
+	mixColorOutputLayout = widgets.NewQVBoxLayout()
+	mixColorOutputMainWidget.SetLayout(mixColorOutputLayout)
+	mixColorOutputWindow.SetCentralWidget(mixColorOutputMainWidget)
+	backButton := widgets.NewQPushButton2("Back", nil)
+	backButton.ConnectClicked(func(_ bool) { backToMixFromResults() } )
+	if !exists {
+		resultTextContent := "We are very sorry. With the given repository, your target color cannot be obtained." +
+		" Perhaps you could try another repository or some other target color."
+		resultText := widgets.NewQLabel(nil, 0)
+		resultText.SetWordWrap(true)
+		resultText.SetText(resultTextContent)
+		mixColorOutputLayout.AddWidget(resultText, 0, 0)
+	} else if !inStock {
+		resultTextContent := "Congratulations! Your target color can be mixed using the following pigments. But "+
+		"note that one or more pigments are out of stock."
+		resultText := widgets.NewQLabel(nil, 0)
+		resultText.SetWordWrap(true)
+		resultText.SetText(resultTextContent)
+		componentLayout := widgets.NewQGridLayout2()
+		componentNum := len(composition)
+		pigmentLabel := widgets.NewQLabel2("Pigment", nil, 0)
+		percentageLabel := widgets.NewQLabel2("Percentage", nil, 0)
+		inStockLabel := widgets.NewQLabel2("In stock", nil, 0)
+		componentLayout.AddWidget(pigmentLabel, 0, 0, 0)
+		componentLayout.AddWidget(percentageLabel, 0, 1, 0)
+		componentLayout.AddWidget(inStockLabel, 0, 2, 0)
+		for i:=0; i<componentNum; i++ {
+			component := composition[i]
+			pigment := component.pigment
+			pigmentName := pigment.name
+			pigmentPercentage := strconv.FormatFloat(component.percentage, 'f', -1, 64)
+			var pigmentInStock string
+			if component.inStock {
+				pigmentInStock = "yes"
+			} else {
+				pigmentInStock = "no"
+			}
+			pigmentNameLabel := widgets.NewQLabel2(pigmentName, nil, 0)
+			pigmentPercentageLabel := widgets.NewQLabel2(pigmentPercentage, nil, 0)
+			pigmentInStockLabel := widgets.NewQLabel2(pigmentInStock, nil, 0)
+			componentLayout.AddWidget(pigmentNameLabel, i+1, 0, 0)
+			componentLayout.AddWidget(pigmentPercentageLabel, i+1, 1, 0)
+			componentLayout.AddWidget(pigmentInStockLabel, i+1, 2, 0)
+		}
+		mixColorOutputLayout.AddWidget(resultText, 0, 0)
+		mixColorOutputLayout.AddLayout(componentLayout, 0)
+	} else {
+		resultTextContent := "Congratulations! Your target color can be mixed using the following pigments (with lowest price)."
+		resultText := widgets.NewQLabel(nil, 0)
+		resultText.SetWordWrap(true)
+		resultText.SetText(resultTextContent)
+		componentLayout := widgets.NewQGridLayout2()
+		componentNum := len(composition)
+		pigmentLabel := widgets.NewQLabel2("Pigment", nil, 0)
+		percentageLabel := widgets.NewQLabel2("Percentage", nil, 0)
+		componentLayout.AddWidget(pigmentLabel, 0, 0, 0)
+		componentLayout.AddWidget(percentageLabel, 0, 1, 0)
+		for i:=0; i<componentNum; i++ {
+			component := composition[i]
+			pigment := component.pigment
+			pigmentName := pigment.name
+			pigmentPercentage := strconv.FormatFloat(component.percentage, 'f', -1, 64)
+			pigmentNameLabel := widgets.NewQLabel2(pigmentName, nil, 0)
+			pigmentPercentageLabel := widgets.NewQLabel2(pigmentPercentage, nil, 0)
+			componentLayout.AddWidget(pigmentNameLabel, i+1, 0, 0)
+			componentLayout.AddWidget(pigmentPercentageLabel, i+1, 1, 0)
+		}
+		mixColorOutputLayout.AddWidget(resultText, 0, 0)
+		mixColorOutputLayout.AddLayout(componentLayout, 0)
+	}
+	mixColorOutputLayout.AddWidget(backButton, 0, 0)
+}
+
+func ShowMixColorDialog(exists, inStock bool, composition []Component) {
+	if !exists {
+		message :=" We are very sorry. With the given repository, your target color cannot be obtained." +
+		" Perhaps you could try another repository or some other target color."
+		widgets.QMessageBox_Information(nil, "OK", message,
+		widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+	} else {
+		CreateMixColorOutputWindow(exists, inStock, composition)
+		mixColorOutputWindow.Show()
+		mixColorWindow.Hide()
+	}
 }
 
 func makeHits() {
@@ -462,4 +614,8 @@ func makeHits() {
 		widgets.QMessageBox_Information(nil, "OK", noFileErrorMessage,
 		widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
 	}
+}
+
+func colorRange() {
+	
 }
