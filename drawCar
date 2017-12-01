@@ -4,6 +4,10 @@ import(
   "image/color"
 )
 
+/*==============================================================================
+ * Draw Car
+ *
+ *============================================================================*/
 //DrawCar take the body color of the car, write a png picture of the car
 //Note: the input type must be uint8! Convert type before use
 func DrawCar(r,g,b uint8){
