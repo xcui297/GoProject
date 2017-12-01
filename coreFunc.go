@@ -42,6 +42,10 @@ type Component struct {
 	inStock bool
 }
 
+/*==============================================================================
+ * 1. Load repository
+ *
+ *============================================================================*/
 // ReadFile read a given csv file and create a Pigment struct for each pigment
 func ReadFile(filename string) (bool,[]Pigment) {
   // noError reports whether the function works well
@@ -138,20 +142,28 @@ func SpaceFieldsJoin(str string) string {
     return strings.Join(strings.Fields(str), "")
 }
 
+/*==============================================================================
+ * 2. Mix to get the target color
+ *
+ *============================================================================*/
 // FindComponents uses linear programming to find pigments that can mix together in certain proportion
 // to give the targret Color.
 // It returns two boolean value indicating whether can find components from
 // the given repository and whether all components are in stock, respectively.
 // It also returns a slice of those found components.
-func FindComponents(targetColor Paint, repository []Pigment) (bool, bool, []Component){
-	targetAmount := targetColor.amount
-	vars := SolveLP(targetColor, repository)
-	return InterpretLPResults(vars, targetAmount, repository)
+func FindComponents(R, G, B int, targetAmount float64, repository []Pigment) (bool, bool, []Component) {
+	var targetColor Paint
+	targetColor.R = R
+	targetColor.G = G
+	targetColor.B = B
+	targetColor.amount = targetAmount
+	vars := SolveLPFunc1(targetColor, repository)
+	return InterpretFunc1LPResults(vars, targetAmount, repository)
 }
 
 // SolveLP gives the component proportions at a minimized price when it is
 // constrained by the targeted R,G,B values and the same total unit amount.
-func SolveLP(targetColor Paint, repository []Pigment) []float64 {
+func SolveLPFunc1(targetColor Paint, repository []Pigment) []float64 {
 	// Make a new linear program structure.
 	numPigments := len(repository)
 	lp := golp.NewLP(0, numPigments)
@@ -195,6 +207,13 @@ func SolveLP(targetColor Paint, repository []Pigment) []float64 {
 	// combination. We convert the minimization to a maximination by setting the
 	// coefficents of price to negative.
 	lp.SetObjFn(rowPrice)
+	vars := SolveLP(*lp)
+
+	return vars
+}
+
+func SolveLP(lp golp.LP) []float64 {
+	// Maximizethe objective function, restricted by constraints of lp
 	lp.SetMaximize()
 
 	// Solve the linear programming.
@@ -211,7 +230,7 @@ func SolveLP(targetColor Paint, repository []Pigment) []float64 {
 // required amount of the target color.
 // 3. a slice of Comonent, each of which gives the pigment, the proportion, the
 // required amount, the stock status.
-func InterpretLPResults(vars []float64, targetAmount float64, repository []Pigment) (bool, bool, []Component) {
+func InterpretFunc1LPResults(vars []float64, targetAmount float64, repository []Pigment) (bool, bool, []Component) {
 	var exists, inStock bool
 	composition:= make([]Component, 0)
 
@@ -263,6 +282,10 @@ func InterpretLPResults(vars []float64, targetAmount float64, repository []Pigme
 	return exists,inStock, composition
 }
 
+/*==============================================================================
+ *
+ *
+ *============================================================================*/
 //MixColor takes a slice of pigments and their weights
 //and returns the mixed new color, as well as the price per gal
 func MixColor(p []Pigment, weight []float64) (Paint, float64) {
@@ -291,7 +314,10 @@ func MixColor(p []Pigment, weight []float64) (Paint, float64) {
   return targetColor, totalPrice
 }
 
-
+/*==============================================================================
+ * main for test
+ *
+ *============================================================================*/
 func main() {
   filename := os.Args[1]
   noError, repository := ReadFile(filename)
@@ -301,23 +327,21 @@ func main() {
 		fmt.Println("Load repository: Failed.")
 	}
 
-	var targetColor Paint
-	targetColor.name = "grey"
-	targetColor.R = 128
-	targetColor.G = 128
-	targetColor.B = 128
-	targetColor.amount = 20
-	exists, inStock, composition := FindComponents(targetColor, repository)
+	R := 128
+	G := 128
+	B := 128
+	targetAmount := 20.0
+	exists, inStock, composition := FindComponents(R, G, B, targetAmount, repository)
 	if exists == true {
-		fmt.Fprintf(os.Stdout, "Components found for %v from the given repository.\n", targetColor.name)
+		fmt.Fprintf(os.Stdout, "Components found for targetColor from the given repository.\n")
 	} else {
-		fmt.Fprintf(os.Stdout,"CANNOT find components for %v from the given repository.\n", targetColor.name)
+		fmt.Fprintf(os.Stdout,"CANNOT find components for from the given repository.\n")
 	}
 
 	if inStock == true {
-		fmt.Fprintf(os.Stdout,"All Components to form %v of %v are in stock.\nPlease check details below:\n", targetColor.amount, targetColor.name)
+		fmt.Fprintf(os.Stdout,"All Components to form %v of target color are in stock.\nPlease check details below:\n",targetAmount)
 	} else {
-		fmt.Fprintf(os.Stdout,"NOT all Components for %v of %v are in stock.\nPlease check details below:\n",targetColor.amount,  targetColor.name)
+		fmt.Fprintf(os.Stdout,"NOT all Components for %v of target color are in stock.\nPlease check details below:\n",targetAmount)
 	}
 
 	for _, component := range composition {
