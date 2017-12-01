@@ -105,7 +105,11 @@ func Min(a,b float64) float64{
 
 //LightenColor takes one channel of a color and returns a lighter channel
 func LightenColor(channel uint8) uint8{
-  return uint8(Min(float64(channel)*1.1,255))
+  if channel != 0{
+    return uint8(Min(float64(channel)*1.1,255))
+  }else{
+    return 10
+  }
 }
 
 //DarkenColor takes one channel of a color and returns a darker channel according to the degree
@@ -123,7 +127,6 @@ func DrawRectangle(picture *Canvas, color color.Color, startRow, startCol, endRo
   x2, y2 := (endCol+1)*squarewidth, (endRow+1)*squarewidth
   (*picture).ClearRect(x1, y1, x2, y2)
 }
-
 
 //DrawSquare(Canvas,color.Color,int,int) takes a Canvas, the color of the square,
 // the col and row of the square
