@@ -1,3 +1,28 @@
+/*==============================================================================
+
+ * Convert color in one space into another
+
+ * Function format: Convert___To___()
+ 
+ * Color spaces to be selected from: RGB,CMYK,CMY,Hsb,Lab,XYZ
+   Note: 
+   1. Here the XYZ is CIE XYZ)
+   2. ConvertColor uses sRGB color space. More imformation about sRGB vs AdobeRGB: https://fstoppers.com/pictures/adobergb-vs-srgb-3167
+ 
+ * Output type: float64
+ 
+ * Input type and range:
+   RGB: int, 0-255
+   CMY/CMYK: float64, 0-1
+   Hsb: h, int, 0-360; s, b, float64, 0-1
+   Lab: L, int, 0-100; a, b, int, -128-128
+   XYZ: float64, 0-1
+  
+ * You can call the Round function to limit the number of digits after decimal point
+
+ *============================================================================*/
+
+
 package convertColor
 
 import(
@@ -129,8 +154,17 @@ func ConvertRGBToCMYK(R,G,B int)(float64,float64,float64,float64){
 //convertRGBToCMYK takes the float64 R,G,B values of a color
 //and returns the float64 CMYK values of this color
 func convertRGBToCMYK(R,G,B float64)(float64,float64,float64,float64){
-  C,M,Y := convertRGBToCMY(R,G,B)
-  return ConvertCMYToCMYK(C,M,Y)
+  C := R
+  M := G
+  Y := B
+  K := Max(C,M,Y)
+  if K == 0{
+    return 0,0,0,1
+  }
+  C = (K-C)/K
+  M = (K-M)/K
+  Y = (K-Y)/K
+  return C,M,Y,1-K/255
 }
 
 //ConvertCMYToRGB takes the float64 C,M,Y values of a color
@@ -346,6 +380,44 @@ func ConvertHsbToXYZ(h int,s,b float64)(float64,float64,float64){
   return convertRGBToXYZ(R,G,B)
 }
 
+//ConvertCMYToCMYK takes float64 C,M,Y values of a color
+//and returns the float64 C,M,Y,K values of this color
+//C,Y,M range from 0-1
+func ConvertCMYToCMYK(C,M,Y float64)(float64,float64,float64,float64){
+  K := Min(C,M,Y)
+  C = (K-(1-C))/K
+  M = (K-(1-M))/K
+  Y = (K-(1-Y))/K
+  return C,M,Y,K
+}
+
+//ConvertCMYKToCMY takes float64 C,M,Y,K values of a color
+//and returns the float64 C,M,Y values of this color
+//C,Y,M,K range from 0-1
+func ConvertCMYKToCMY(C,M,Y,K float64)(float64,float64,float64){
+  C = 1-(1-K)*(1-C)
+  M = 1-(1-K)*(1-M)
+  Y = 1-(1-K)*(1-Y)
+  return C,M,Y
+}
+
+//Round takes a float64 number x and an interger n
+//and returns the number rournded to n digits after the decimal point
+func Round(x float64, n int) float64{
+  pow := math.Pow(10,float64(n))
+  return math.Trunc((x+0.5/pow)*pow)/pow
+}
+
+//Max takes a slice of numbers and returns the maximum
+func Max(a ... float64) float64{
+  maximum := a[1]
+  for i := range a{
+    if a[i] > maximum{
+      maximum = a[i]
+    }
+  }
+  return maximum
+}
 
 //FunctionLab is the function used when convert XYZ space into L*a*b* space
 func FunctionLab(t float64) float64{
@@ -382,40 +454,4 @@ func LimitInRange(x,lowerLimit,upperLimit float64) float64{
     x = upperLimit
   }
   return x
-}
-
-//ConvertCMYToCMYK takes float64 C,M,Y values of a color
-//and returns the float64 C,M,Y,K values of this color
-//C,Y,M range from 0-1
-func ConvertCMYToCMYK(C,M,Y float64)(float64,float64,float64,float64){
-  K := Min(C,M,Y)
-  C -= K
-  M -= K
-  Y -= K
-  return C,M,Y,K
-}
-
-//ConvertCMYKToCMY takes float64 C,M,Y,K values of a color
-//and returns the float64 C,M,Y values of this color
-//C,Y,M,K range from 0-1
-func ConvertCMYKToCMY(C,M,Y,K float64)(float64,float64,float64){
-  return C+K,M+K,Y+K
-}
-
-//Round takes a float64 number x and an interger n
-//and returns the number rournded to n digits after the decimal point
-func Round(x float64, n int) float64{
-  pow := math.Pow(10,float64(n))
-  return math.Trunc((x+0.5/pow)*pow)/pow
-}
-
-//Max takes a slice of numbers and returns the maximum
-func Max(a ... float64) float64{
-  maximum := a[1]
-  for i := range a{
-    if a[i] > maximum{
-      maximum = a[i]
-    }
-  }
-  return maximum
 }
