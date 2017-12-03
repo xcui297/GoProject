@@ -105,16 +105,6 @@ func DrawCar(r,g,b uint8) string{
   carModel.SaveToPNG(randFileName)
   return randFileName
 }
-
-//Min takes two numbers and returns the minimum
-func Min(a,b float64) float64{
-  if a<b{
-    return a
-  }else{
-    return b
-  }
-}
-
 //LightenColor takes one channel of a color and returns a lighter channel
 func LightenColor(channel uint8) uint8{
   if channel != 0{
