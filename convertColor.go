@@ -23,7 +23,7 @@
  *============================================================================*/
 
 
-package convertColor
+package main
 
 import(
   "math"
@@ -384,11 +384,11 @@ func ConvertHsbToXYZ(h int,s,b float64)(float64,float64,float64){
 //and returns the float64 C,M,Y,K values of this color
 //C,Y,M range from 0-1
 func ConvertCMYToCMYK(C,M,Y float64)(float64,float64,float64,float64){
-  K := Min(C,M,Y)
+  K := 1 - Min(C,M,Y)
   C = (K-(1-C))/K
   M = (K-(1-M))/K
   Y = (K-(1-Y))/K
-  return C,M,Y,K
+  return C,M,Y,1-K
 }
 
 //ConvertCMYKToCMY takes float64 C,M,Y,K values of a color
@@ -417,6 +417,16 @@ func Max(a ... float64) float64{
     }
   }
   return maximum
+}
+
+func Min(a ... float64) float64 {
+  minimum := a[1]
+  for i := range a{
+    if a[i] < minimum {
+      minimum = a[i]
+    }
+  }
+  return minimum
 }
 
 //FunctionLab is the function used when convert XYZ space into L*a*b* space
