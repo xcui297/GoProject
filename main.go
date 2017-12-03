@@ -24,6 +24,12 @@ var (
 	func1Exists bool
 	func1InStock bool
 	func1Composition []Component
+	rgbToLabWindow *widgets.QMainWindow
+	labWindow *widgets.QMainWindow
+	xyzWindow *widgets.QMainWindow
+	cmyWindow *widgets.QMainWindow
+	cmykWindow *widgets.QMainWindow
+	hsbWindow *widgets.QMainWindow
 )
 
 func main() {
@@ -558,24 +564,906 @@ func CreateConverterWindow() {
     converterWindow.SetWindowTitle("Color converter")
 	converterWindow.SetMinimumSize2(500, 500)
     converterWindow.SetMaximumSize2(500, 500)
-	// Create layout of index window
+	// Create layout of converter window
 	converterLayout := widgets.NewQVBoxLayout()
-	// Create main widget of index window and set the layout
+	// Create main widget of converter window and set the layout
 	converterMainWidget := widgets.NewQWidget(nil, 0)
 	converterMainWidget.SetLayout(converterLayout)
 	// Create introduction textbox on index window
-    introTextContent := "Pick from the following color formats to convert from and to."
+    introTextContent := "Pick from the following color formats to convert from."
     introText := widgets.NewQLabel(nil, 0)
     introText.SetWordWrap(true)
     introText.SetText(introTextContent)
-    // Add intro text box to layout of index window
+    // Add intro text box to layout of converter window
     converterLayout.AddWidget(introText, 0, 0)
+	
+	CreateRGBtoLabWindow()
+	CreateLabWindow()
+	CreateXYZWindow()
+	CreateCMYWindow()
+	CreateCMYKWindow()
+	CreateHsbWindow()
+	rgbButton := widgets.NewQPushButton2("Convert from RGB", nil)
+	rgbButton.ConnectClicked(func(_ bool) {openConverterFromConverter(rgbToLabWindow)} )
+	converterLayout.AddWidget(rgbButton, 0, 0)
+	labButton := widgets.NewQPushButton2("Convert from L*a*b*", nil)
+	labButton.ConnectClicked(func(_ bool) {openConverterFromConverter(labWindow)} )
+	converterLayout.AddWidget(labButton, 0, 0)
+	xyzButton := widgets.NewQPushButton2("Convert from XYZ", nil)
+	xyzButton.ConnectClicked(func(_ bool) {openConverterFromConverter(xyzWindow)} )
+	converterLayout.AddWidget(xyzButton, 0, 0)
+	cmyButton := widgets.NewQPushButton2("Convert from CMY", nil)
+	cmyButton.ConnectClicked(func(_ bool) {openConverterFromConverter(cmyWindow)} )
+	converterLayout.AddWidget(cmyButton, 0, 0)
+	cmykButton := widgets.NewQPushButton2("Convert from CMYK", nil)
+	cmykButton.ConnectClicked(func(_ bool) {openConverterFromConverter(cmykWindow)} )
+	hsbButton := widgets.NewQPushButton2("Convert from Hsb", nil)
+	hsbButton.ConnectClicked(func(_ bool) {openConverterFromConverter(hsbWindow)} )
+	converterLayout.AddWidget(hsbButton, 0, 0)
 	// Create back button and add it to the layout
 	backButton := widgets.NewQPushButton2("Back", nil)
 	backButton.ConnectClicked(func(_ bool) { backToIndexFromFunction(converterWindow) } )
 	converterLayout.AddWidget(backButton, 0, 0)
 	//Set converter main widget as the central widget of the color converter window
 	converterWindow.SetCentralWidget(converterMainWidget)
+}
+
+func CreateRGBtoLabWindow() {
+	rgbToLabWindow = widgets.NewQMainWindow(nil,0)
+    rgbToLabWindow.SetWindowTitle("RGB to other color spaces")
+	rgbToLabWindow.SetMinimumSize2(500, 500)
+    rgbToLabWindow.SetMaximumSize2(500, 500)
+	rgbToLabLayout := widgets.NewQVBoxLayout()
+	rgbToLabMainWidget := widgets.NewQWidget(nil, 0)
+	rgbToLabMainWidget.SetLayout(rgbToLabLayout)
+	rgbToLabWindow.SetCentralWidget(rgbToLabMainWidget)
+    introTextContent := "RGB inputs should be integers from 0 to 255."
+    introText := widgets.NewQLabel(nil, 0)
+    introText.SetWordWrap(true)
+    introText.SetText(introTextContent)
+    rgbToLabLayout.AddWidget(introText, 0, 0)
+	targetColor := widgets.NewQGroupBox2("RGB color", nil)
+	targetColorLayout := widgets.NewQVBoxLayout()
+	targetColor.SetLayout(targetColorLayout)
+	// Construct box for red input
+	redGroup := widgets.NewQGroupBox(nil)
+	redLabel := widgets.NewQLabel2("R:", nil, 0)
+	redSpinBox := widgets.NewQSpinBox(nil)
+	redSpinBox.SetMaximum(255)
+	redSpinBox.SetMinimum(0)
+	redLayout := widgets.NewQGridLayout2()
+	redLayout.AddWidget(redLabel, 0, 0, 0)
+	redLayout.AddWidget(redSpinBox, 0, 1, 0)
+	redGroup.SetLayout(redLayout)
+	// Construct box for green input
+	greenGroup := widgets.NewQGroupBox(nil)
+	greenLabel := widgets.NewQLabel2("G:", nil, 0)
+	greenSpinBox := widgets.NewQSpinBox(nil)
+	greenSpinBox.SetMaximum(255)
+	greenSpinBox.SetMinimum(0)
+	greenLayout := widgets.NewQGridLayout2()
+	greenLayout.AddWidget(greenLabel, 0, 0, 0)
+	greenLayout.AddWidget(greenSpinBox, 0, 1, 0)
+	greenGroup.SetLayout(greenLayout)
+	// Construct box for blue input
+	blueGroup := widgets.NewQGroupBox(nil)
+	blueLabel := widgets.NewQLabel2("B:", nil, 0)
+	blueSpinBox := widgets.NewQSpinBox(nil)
+	blueSpinBox.SetMaximum(255)
+	blueSpinBox.SetMinimum(0)
+	blueLayout := widgets.NewQGridLayout2()
+	blueLayout.AddWidget(blueLabel, 0, 0, 0)
+	blueLayout.AddWidget(blueSpinBox, 0, 1, 0)
+	blueGroup.SetLayout(blueLayout)
+	targetColorLayout.AddWidget(redGroup, 0, 0)
+	targetColorLayout.AddWidget(greenGroup, 0, 0)
+	targetColorLayout.AddWidget(blueGroup, 0, 0)
+	toLabButton := widgets.NewQPushButton2("Convert to L*a*b*", nil)
+	toLabButton.ConnectClicked(func(_ bool) {rgbToLabDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toXYZButton := widgets.NewQPushButton2("Convert to XYZ", nil)
+	toXYZButton.ConnectClicked(func(_ bool) {rgbToXYZDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toCMYButton := widgets.NewQPushButton2("Convert to CMY", nil)
+	toCMYButton.ConnectClicked(func(_ bool) {rgbToCMYDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toCMYKButton := widgets.NewQPushButton2("Convert to CMYK", nil)
+	toCMYKButton.ConnectClicked(func(_ bool) {rgbToCMYKDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toHsbButton := widgets.NewQPushButton2("Convert to Hsb", nil)
+	toHsbButton.ConnectClicked(func(_ bool) {rgbToHsbDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	backButton := widgets.NewQPushButton2("Back", nil)
+	backButton.ConnectClicked(func(_ bool) {backToConverterFrom(rgbToLabWindow)} )
+	rgbToLabLayout.AddWidget(targetColor, 0, 0)
+	rgbToLabLayout.AddWidget(toLabButton, 0, 0)
+	rgbToLabLayout.AddWidget(toXYZButton, 0, 0)
+	rgbToLabLayout.AddWidget(toCMYButton, 0, 0)
+	rgbToLabLayout.AddWidget(toCMYKButton, 0, 0)
+	rgbToLabLayout.AddWidget(toHsbButton, 0, 0)
+	rgbToLabLayout.AddWidget(backButton, 0, 0)
+}
+
+func CreateLabWindow() {
+	labWindow = widgets.NewQMainWindow(nil,0)
+    labWindow.SetWindowTitle("L*a*b* to other color spaces")
+	labWindow.SetMinimumSize2(500, 500)
+    labWindow.SetMaximumSize2(500, 500)
+	labLayout := widgets.NewQVBoxLayout()
+	labMainWidget := widgets.NewQWidget(nil, 0)
+	labMainWidget.SetLayout(labLayout)
+	labWindow.SetCentralWidget(labMainWidget)
+    introTextContent := "L should be an integer from 0 to 100. a and b are integers from -128 to 128."
+    introText := widgets.NewQLabel(nil, 0)
+    introText.SetWordWrap(true)
+    introText.SetText(introTextContent)
+    labLayout.AddWidget(introText, 0, 0)
+	targetColor := widgets.NewQGroupBox2("L*a*b* color", nil)
+	targetColorLayout := widgets.NewQVBoxLayout()
+	targetColor.SetLayout(targetColorLayout)
+	// Construct box for red input
+	redGroup := widgets.NewQGroupBox(nil)
+	redLabel := widgets.NewQLabel2("L:", nil, 0)
+	redSpinBox := widgets.NewQSpinBox(nil)
+	redSpinBox.SetMaximum(100)
+	redSpinBox.SetMinimum(0)
+	redLayout := widgets.NewQGridLayout2()
+	redLayout.AddWidget(redLabel, 0, 0, 0)
+	redLayout.AddWidget(redSpinBox, 0, 1, 0)
+	redGroup.SetLayout(redLayout)
+	// Construct box for green input
+	greenGroup := widgets.NewQGroupBox(nil)
+	greenLabel := widgets.NewQLabel2("a:", nil, 0)
+	greenSpinBox := widgets.NewQSpinBox(nil)
+	greenSpinBox.SetMaximum(128)
+	greenSpinBox.SetMinimum(-128)
+	greenLayout := widgets.NewQGridLayout2()
+	greenLayout.AddWidget(greenLabel, 0, 0, 0)
+	greenLayout.AddWidget(greenSpinBox, 0, 1, 0)
+	greenGroup.SetLayout(greenLayout)
+	// Construct box for blue input
+	blueGroup := widgets.NewQGroupBox(nil)
+	blueLabel := widgets.NewQLabel2("b:", nil, 0)
+	blueSpinBox := widgets.NewQSpinBox(nil)
+	blueSpinBox.SetMaximum(128)
+	blueSpinBox.SetMinimum(-128)
+	blueLayout := widgets.NewQGridLayout2()
+	blueLayout.AddWidget(blueLabel, 0, 0, 0)
+	blueLayout.AddWidget(blueSpinBox, 0, 1, 0)
+	blueGroup.SetLayout(blueLayout)
+	targetColorLayout.AddWidget(redGroup, 0, 0)
+	targetColorLayout.AddWidget(greenGroup, 0, 0)
+	targetColorLayout.AddWidget(blueGroup, 0, 0)
+	toRGBButton := widgets.NewQPushButton2("Convert to RGB", nil)
+	toRGBButton.ConnectClicked(func(_ bool) {labToRGBDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toXYZButton := widgets.NewQPushButton2("Convert to XYZ", nil)
+	toXYZButton.ConnectClicked(func(_ bool) {labToXYZDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toCMYButton := widgets.NewQPushButton2("Convert to CMY", nil)
+	toCMYButton.ConnectClicked(func(_ bool) {labToCMYDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toCMYKButton := widgets.NewQPushButton2("Convert to CMYK", nil)
+	toCMYKButton.ConnectClicked(func(_ bool) {labToCMYKDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toHsbButton := widgets.NewQPushButton2("Convert to Hsb", nil)
+	toHsbButton.ConnectClicked(func(_ bool) {labToHsbDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	backButton := widgets.NewQPushButton2("Back", nil)
+	backButton.ConnectClicked(func(_ bool) {backToConverterFrom(labWindow)} )
+	labLayout.AddWidget(targetColor, 0, 0)
+	labLayout.AddWidget(toRGBButton, 0, 0)
+	labLayout.AddWidget(toXYZButton, 0, 0)
+	labLayout.AddWidget(toCMYButton, 0, 0)
+	labLayout.AddWidget(toCMYKButton, 0, 0)
+	labLayout.AddWidget(toHsbButton, 0, 0)
+	labLayout.AddWidget(backButton, 0, 0)
+}
+
+func CreateXYZWindow() {
+	xyzWindow = widgets.NewQMainWindow(nil,0)
+    xyzWindow.SetWindowTitle("XYZ to other color spaces")
+	xyzWindow.SetMinimumSize2(500, 500)
+    xyzWindow.SetMaximumSize2(500, 500)
+	xyzLayout := widgets.NewQVBoxLayout()
+	xyzMainWidget := widgets.NewQWidget(nil, 0)
+	xyzMainWidget.SetLayout(xyzLayout)
+	xyzWindow.SetCentralWidget(xyzMainWidget)
+    introTextContent := "XYZ inputs should be float64 numbers from 0 to 1."
+    introText := widgets.NewQLabel(nil, 0)
+    introText.SetWordWrap(true)
+    introText.SetText(introTextContent)
+    xyzLayout.AddWidget(introText, 0, 0)
+	targetColor := widgets.NewQGroupBox2("XYZ color", nil)
+	targetColorLayout := widgets.NewQVBoxLayout()
+	targetColor.SetLayout(targetColorLayout)
+	// Construct box for red input
+	redGroup := widgets.NewQGroupBox(nil)
+	redLabel := widgets.NewQLabel2("X:", nil, 0)
+	redSpinBox := widgets.NewQDoubleSpinBox(nil)
+	redSpinBox.SetMaximum(1.0)
+	redSpinBox.SetMinimum(0.0)
+	redSpinBox.SetSingleStep(0.01)
+	redLayout := widgets.NewQGridLayout2()
+	redLayout.AddWidget(redLabel, 0, 0, 0)
+	redLayout.AddWidget(redSpinBox, 0, 1, 0)
+	redGroup.SetLayout(redLayout)
+	// Construct box for green input
+	greenGroup := widgets.NewQGroupBox(nil)
+	greenLabel := widgets.NewQLabel2("Y:", nil, 0)
+	greenSpinBox := widgets.NewQDoubleSpinBox(nil)
+	greenSpinBox.SetMaximum(1.0)
+	greenSpinBox.SetMinimum(0.0)
+	greenSpinBox.SetSingleStep(0.01)
+	greenLayout := widgets.NewQGridLayout2()
+	greenLayout.AddWidget(greenLabel, 0, 0, 0)
+	greenLayout.AddWidget(greenSpinBox, 0, 1, 0)
+	greenGroup.SetLayout(greenLayout)
+	// Construct box for blue input
+	blueGroup := widgets.NewQGroupBox(nil)
+	blueLabel := widgets.NewQLabel2("Z:", nil, 0)
+	blueSpinBox := widgets.NewQDoubleSpinBox(nil)
+	blueSpinBox.SetMaximum(1.0)
+	blueSpinBox.SetMinimum(0.0)
+	blueSpinBox.SetSingleStep(0.01)
+	blueLayout := widgets.NewQGridLayout2()
+	blueLayout.AddWidget(blueLabel, 0, 0, 0)
+	blueLayout.AddWidget(blueSpinBox, 0, 1, 0)
+	blueGroup.SetLayout(blueLayout)
+	targetColorLayout.AddWidget(redGroup, 0, 0)
+	targetColorLayout.AddWidget(greenGroup, 0, 0)
+	targetColorLayout.AddWidget(blueGroup, 0, 0)
+	toRGBButton := widgets.NewQPushButton2("Convert to RGB", nil)
+	toRGBButton.ConnectClicked(func(_ bool) {xyzToRGBDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toLabButton := widgets.NewQPushButton2("Convert to L*a*b*", nil)
+	toLabButton.ConnectClicked(func(_ bool) {xyzToLabDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toCMYButton := widgets.NewQPushButton2("Convert to CMY", nil)
+	toCMYButton.ConnectClicked(func(_ bool) {xyzToCMYDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toCMYKButton := widgets.NewQPushButton2("Convert to CMYK", nil)
+	toCMYKButton.ConnectClicked(func(_ bool) {xyzToCMYKDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toHsbButton := widgets.NewQPushButton2("Convert to Hsb", nil)
+	toHsbButton.ConnectClicked(func(_ bool) {xyzToHsbDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	backButton := widgets.NewQPushButton2("Back", nil)
+	backButton.ConnectClicked(func(_ bool) {backToConverterFrom(xyzWindow)} )
+	xyzLayout.AddWidget(targetColor, 0, 0)
+	xyzLayout.AddWidget(toRGBButton, 0, 0)
+	xyzLayout.AddWidget(toLabButton, 0, 0)
+	xyzLayout.AddWidget(toCMYButton, 0, 0)
+	xyzLayout.AddWidget(toCMYKButton, 0, 0)
+	xyzLayout.AddWidget(toHsbButton, 0, 0)
+	xyzLayout.AddWidget(backButton, 0, 0)
+}
+
+func CreateCMYWindow() {
+	cmyWindow = widgets.NewQMainWindow(nil,0)
+    cmyWindow.SetWindowTitle("CMY to other color spaces")
+	cmyWindow.SetMinimumSize2(500, 500)
+    cmyWindow.SetMaximumSize2(500, 500)
+	cmyLayout := widgets.NewQVBoxLayout()
+	cmyMainWidget := widgets.NewQWidget(nil, 0)
+	cmyMainWidget.SetLayout(cmyLayout)
+	cmyWindow.SetCentralWidget(cmyMainWidget)
+    introTextContent := "CMY inputs should be float64 numbers from 0 to 1."
+    introText := widgets.NewQLabel(nil, 0)
+    introText.SetWordWrap(true)
+    introText.SetText(introTextContent)
+    cmyLayout.AddWidget(introText, 0, 0)
+	targetColor := widgets.NewQGroupBox2("CMY color", nil)
+	targetColorLayout := widgets.NewQVBoxLayout()
+	targetColor.SetLayout(targetColorLayout)
+	// Construct box for red input
+	redGroup := widgets.NewQGroupBox(nil)
+	redLabel := widgets.NewQLabel2("C:", nil, 0)
+	redSpinBox := widgets.NewQDoubleSpinBox(nil)
+	redSpinBox.SetMaximum(1.0)
+	redSpinBox.SetMinimum(0.0)
+	redSpinBox.SetSingleStep(0.01)
+	redLayout := widgets.NewQGridLayout2()
+	redLayout.AddWidget(redLabel, 0, 0, 0)
+	redLayout.AddWidget(redSpinBox, 0, 1, 0)
+	redGroup.SetLayout(redLayout)
+	// Construct box for green input
+	greenGroup := widgets.NewQGroupBox(nil)
+	greenLabel := widgets.NewQLabel2("M:", nil, 0)
+	greenSpinBox := widgets.NewQDoubleSpinBox(nil)
+	greenSpinBox.SetMaximum(1.0)
+	greenSpinBox.SetMinimum(0.0)
+	greenSpinBox.SetSingleStep(0.01)
+	greenLayout := widgets.NewQGridLayout2()
+	greenLayout.AddWidget(greenLabel, 0, 0, 0)
+	greenLayout.AddWidget(greenSpinBox, 0, 1, 0)
+	greenGroup.SetLayout(greenLayout)
+	// Construct box for blue input
+	blueGroup := widgets.NewQGroupBox(nil)
+	blueLabel := widgets.NewQLabel2("Y:", nil, 0)
+	blueSpinBox := widgets.NewQDoubleSpinBox(nil)
+	blueSpinBox.SetMaximum(1.0)
+	blueSpinBox.SetMinimum(0.0)
+	blueSpinBox.SetSingleStep(0.01)
+	blueLayout := widgets.NewQGridLayout2()
+	blueLayout.AddWidget(blueLabel, 0, 0, 0)
+	blueLayout.AddWidget(blueSpinBox, 0, 1, 0)
+	blueGroup.SetLayout(blueLayout)
+	targetColorLayout.AddWidget(redGroup, 0, 0)
+	targetColorLayout.AddWidget(greenGroup, 0, 0)
+	targetColorLayout.AddWidget(blueGroup, 0, 0)
+	toRGBButton := widgets.NewQPushButton2("Convert to RGB", nil)
+	toRGBButton.ConnectClicked(func(_ bool) {cmyToRGBDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toLabButton := widgets.NewQPushButton2("Convert to L*a*b*", nil)
+	toLabButton.ConnectClicked(func(_ bool) {cmyToLabDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toXYZButton := widgets.NewQPushButton2("Convert to XYZ", nil)
+	toXYZButton.ConnectClicked(func(_ bool) {cmyToXYZDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toCMYKButton := widgets.NewQPushButton2("Convert to CMYK", nil)
+	toCMYKButton.ConnectClicked(func(_ bool) {cmyToCMYKDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toHsbButton := widgets.NewQPushButton2("Convert to Hsb", nil)
+	toHsbButton.ConnectClicked(func(_ bool) {cmyToHsbDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	backButton := widgets.NewQPushButton2("Back", nil)
+	backButton.ConnectClicked(func(_ bool) {backToConverterFrom(cmyWindow)} )
+	cmyLayout.AddWidget(targetColor, 0, 0)
+	cmyLayout.AddWidget(toRGBButton, 0, 0)
+	cmyLayout.AddWidget(toLabButton, 0, 0)
+	cmyLayout.AddWidget(toXYZButton, 0, 0)
+	cmyLayout.AddWidget(toCMYKButton, 0, 0)
+	cmyLayout.AddWidget(toHsbButton, 0, 0)
+	cmyLayout.AddWidget(backButton, 0, 0)
+}
+
+func CreateCMYKWindow() {
+	cmykWindow = widgets.NewQMainWindow(nil,0)
+    cmykWindow.SetWindowTitle("CMYK to other color spaces")
+	cmykWindow.SetMinimumSize2(500, 500)
+    cmykWindow.SetMaximumSize2(500, 500)
+	cmykLayout := widgets.NewQVBoxLayout()
+	cmykMainWidget := widgets.NewQWidget(nil, 0)
+	cmykMainWidget.SetLayout(cmykLayout)
+	cmykWindow.SetCentralWidget(cmykMainWidget)
+    introTextContent := "CMYK inputs should be float64 numbers from 0 to 1."
+    introText := widgets.NewQLabel(nil, 0)
+    introText.SetWordWrap(true)
+    introText.SetText(introTextContent)
+    cmykLayout.AddWidget(introText, 0, 0)
+	targetColor := widgets.NewQGroupBox2("CMYK color", nil)
+	targetColorLayout := widgets.NewQGridLayout2()
+	targetColor.SetLayout(targetColorLayout)
+	// Construct box for red input
+	redGroup := widgets.NewQGroupBox(nil)
+	redLabel := widgets.NewQLabel2("C:", nil, 0)
+	redSpinBox := widgets.NewQDoubleSpinBox(nil)
+	redSpinBox.SetMaximum(1.0)
+	redSpinBox.SetMinimum(0.0)
+	redSpinBox.SetSingleStep(0.01)
+	redLayout := widgets.NewQGridLayout2()
+	redLayout.AddWidget(redLabel, 0, 0, 0)
+	redLayout.AddWidget(redSpinBox, 0, 1, 0)
+	redGroup.SetLayout(redLayout)
+	// Construct box for green input
+	greenGroup := widgets.NewQGroupBox(nil)
+	greenLabel := widgets.NewQLabel2("M:", nil, 0)
+	greenSpinBox := widgets.NewQDoubleSpinBox(nil)
+	greenSpinBox.SetMaximum(1.0)
+	greenSpinBox.SetMinimum(0.0)
+	greenSpinBox.SetSingleStep(0.01)
+	greenLayout := widgets.NewQGridLayout2()
+	greenLayout.AddWidget(greenLabel, 0, 0, 0)
+	greenLayout.AddWidget(greenSpinBox, 0, 1, 0)
+	greenGroup.SetLayout(greenLayout)
+	// Construct box for blue input
+	blueGroup := widgets.NewQGroupBox(nil)
+	blueLabel := widgets.NewQLabel2("Y:", nil, 0)
+	blueSpinBox := widgets.NewQDoubleSpinBox(nil)
+	blueSpinBox.SetMaximum(1.0)
+	blueSpinBox.SetMinimum(0.0)
+	blueSpinBox.SetSingleStep(0.01)
+	blueLayout := widgets.NewQGridLayout2()
+	blueLayout.AddWidget(blueLabel, 0, 0, 0)
+	blueLayout.AddWidget(blueSpinBox, 0, 1, 0)
+	blueGroup.SetLayout(blueLayout)
+	kGroup := widgets.NewQGroupBox(nil)
+	kLabel := widgets.NewQLabel2("K:", nil, 0)
+	kSpinBox := widgets.NewQDoubleSpinBox(nil)
+	kSpinBox.SetMaximum(1.0)
+	kSpinBox.SetMinimum(0.0)
+	kSpinBox.SetSingleStep(0.01)
+	kLayout := widgets.NewQGridLayout2()
+	kLayout.AddWidget(kLabel, 0, 0, 0)
+	kLayout.AddWidget(kSpinBox, 0, 1, 0)
+	kGroup.SetLayout(kLayout)
+	targetColorLayout.AddWidget(redGroup, 0, 0, 0)
+	targetColorLayout.AddWidget(greenGroup, 0, 1, 0)
+	targetColorLayout.AddWidget(blueGroup, 1, 0, 0)
+	targetColorLayout.AddWidget(kGroup, 1, 1, 0)
+	toRGBButton := widgets.NewQPushButton2("Convert to RGB", nil)
+	toRGBButton.ConnectClicked(func(_ bool) {cmykToRGBDialog(redSpinBox, greenSpinBox, blueSpinBox, kSpinBox)} )
+	toLabButton := widgets.NewQPushButton2("Convert to L*a*b*", nil)
+	toLabButton.ConnectClicked(func(_ bool) {cmykToLabDialog(redSpinBox, greenSpinBox, blueSpinBox, kSpinBox)} )
+	toXYZButton := widgets.NewQPushButton2("Convert to XYZ", nil)
+	toXYZButton.ConnectClicked(func(_ bool) {cmykToXYZDialog(redSpinBox, greenSpinBox, blueSpinBox, kSpinBox)} )
+	toCMYButton := widgets.NewQPushButton2("Convert to CMY", nil)
+	toCMYButton.ConnectClicked(func(_ bool) {cmykToCMYDialog(redSpinBox, greenSpinBox, blueSpinBox, kSpinBox)} )
+	toHsbButton := widgets.NewQPushButton2("Convert to Hsb", nil)
+	toHsbButton.ConnectClicked(func(_ bool) {cmykToHsbDialog(redSpinBox, greenSpinBox, blueSpinBox, kSpinBox)} )
+	backButton := widgets.NewQPushButton2("Back", nil)
+	backButton.ConnectClicked(func(_ bool) {backToConverterFrom(cmykWindow)} )
+	cmykLayout.AddWidget(targetColor, 0, 0)
+	cmykLayout.AddWidget(toRGBButton, 0, 0)
+	cmykLayout.AddWidget(toLabButton, 0, 0)
+	cmykLayout.AddWidget(toXYZButton, 0, 0)
+	cmykLayout.AddWidget(toCMYButton, 0, 0)
+	cmykLayout.AddWidget(toHsbButton, 0, 0)
+	cmykLayout.AddWidget(backButton, 0, 0)
+}
+
+func CreateHsbWindow() {
+	hsbWindow = widgets.NewQMainWindow(nil,0)
+    hsbWindow.SetWindowTitle("Hsb to other color spaces")
+	hsbWindow.SetMinimumSize2(500, 500)
+    hsbWindow.SetMaximumSize2(500, 500)
+	hsbLayout := widgets.NewQVBoxLayout()
+	hsbMainWidget := widgets.NewQWidget(nil, 0)
+	hsbMainWidget.SetLayout(hsbLayout)
+	hsbWindow.SetCentralWidget(hsbMainWidget)
+    introTextContent := "H should be an integer from 0 to 360. s and b are float64 numbers from 0 to 1."
+    introText := widgets.NewQLabel(nil, 0)
+    introText.SetWordWrap(true)
+    introText.SetText(introTextContent)
+    hsbLayout.AddWidget(introText, 0, 0)
+	targetColor := widgets.NewQGroupBox2("Hsb color", nil)
+	targetColorLayout := widgets.NewQVBoxLayout()
+	targetColor.SetLayout(targetColorLayout)
+	// Construct box for red input
+	redGroup := widgets.NewQGroupBox(nil)
+	redLabel := widgets.NewQLabel2("H:", nil, 0)
+	redSpinBox := widgets.NewQSpinBox(nil)
+	redSpinBox.SetMaximum(360)
+	redSpinBox.SetMinimum(0)
+	redLayout := widgets.NewQGridLayout2()
+	redLayout.AddWidget(redLabel, 0, 0, 0)
+	redLayout.AddWidget(redSpinBox, 0, 1, 0)
+	redGroup.SetLayout(redLayout)
+	// Construct box for green input
+	greenGroup := widgets.NewQGroupBox(nil)
+	greenLabel := widgets.NewQLabel2("s:", nil, 0)
+	greenSpinBox := widgets.NewQDoubleSpinBox(nil)
+	greenSpinBox.SetMaximum(1.0)
+	greenSpinBox.SetMinimum(0.0)
+	greenSpinBox.SetSingleStep(0.01)
+	greenLayout := widgets.NewQGridLayout2()
+	greenLayout.AddWidget(greenLabel, 0, 0, 0)
+	greenLayout.AddWidget(greenSpinBox, 0, 1, 0)
+	greenGroup.SetLayout(greenLayout)
+	// Construct box for blue input
+	blueGroup := widgets.NewQGroupBox(nil)
+	blueLabel := widgets.NewQLabel2("b:", nil, 0)
+	blueSpinBox := widgets.NewQDoubleSpinBox(nil)
+	blueSpinBox.SetMaximum(1.0)
+	blueSpinBox.SetMinimum(0.0)
+	blueSpinBox.SetSingleStep(0.01)
+	blueLayout := widgets.NewQGridLayout2()
+	blueLayout.AddWidget(blueLabel, 0, 0, 0)
+	blueLayout.AddWidget(blueSpinBox, 0, 1, 0)
+	blueGroup.SetLayout(blueLayout)
+	targetColorLayout.AddWidget(redGroup, 0, 0)
+	targetColorLayout.AddWidget(greenGroup, 0, 0)
+	targetColorLayout.AddWidget(blueGroup, 0, 0)
+	toRGBButton := widgets.NewQPushButton2("Convert to RGB", nil)
+	toRGBButton.ConnectClicked(func(_ bool) {hsbToRGBDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toLabButton := widgets.NewQPushButton2("Convert to L*a*b*", nil)
+	toLabButton.ConnectClicked(func(_ bool) {hsbToLabDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toXYZButton := widgets.NewQPushButton2("Convert to XYZ", nil)
+	toXYZButton.ConnectClicked(func(_ bool) {hsbToXYZDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toCMYButton := widgets.NewQPushButton2("Convert to CMY", nil)
+	toCMYButton.ConnectClicked(func(_ bool) {hsbToCMYDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	toCMYKButton := widgets.NewQPushButton2("Convert to CMYK", nil)
+	toCMYKButton.ConnectClicked(func(_ bool) {hsbToCMYKDialog(redSpinBox, greenSpinBox, blueSpinBox)} )
+	backButton := widgets.NewQPushButton2("Back", nil)
+	backButton.ConnectClicked(func(_ bool) {backToConverterFrom(hsbWindow)} )
+	hsbLayout.AddWidget(targetColor, 0, 0)
+	hsbLayout.AddWidget(toRGBButton, 0, 0)
+	hsbLayout.AddWidget(toLabButton, 0, 0)
+	hsbLayout.AddWidget(toXYZButton, 0, 0)
+	hsbLayout.AddWidget(toCMYButton, 0, 0)
+	hsbLayout.AddWidget(toCMYKButton, 0, 0)
+	hsbLayout.AddWidget(backButton, 0, 0)
+}
+
+func hsbToCMYKDialog(redSpinBox *widgets.QSpinBox, greenSpinBox, blueSpinBox *widgets.QDoubleSpinBox) {
+	h := redSpinBox.Value()
+	s := greenSpinBox.Value()
+	b := blueSpinBox.Value()
+	C, M, Y, K := ConvertHsbToCMYK(h, s, b)
+	CString := strconv.FormatFloat(C, 'f', 4, 64)
+	MString := strconv.FormatFloat(M, 'f', 4, 64)
+	YString := strconv.FormatFloat(Y, 'f', 4, 64)
+	KString := strconv.FormatFloat(K, 'f', 4, 64)
+	message := "C: "+CString+", M: "+MString+", Y: "+YString+", K: "+KString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func hsbToCMYDialog(redSpinBox *widgets.QSpinBox, greenSpinBox, blueSpinBox *widgets.QDoubleSpinBox) {
+	h := redSpinBox.Value()
+	s := greenSpinBox.Value()
+	b := blueSpinBox.Value()
+	C, M, Y := ConvertHsbToCMY(h, s, b)
+	CString := strconv.FormatFloat(C, 'f', 4, 64)
+	MString := strconv.FormatFloat(M, 'f', 4, 64)
+	YString := strconv.FormatFloat(Y, 'f', 4, 64)
+	message := "C: "+CString+", M: "+MString+", Y: "+YString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func hsbToXYZDialog(redSpinBox *widgets.QSpinBox, greenSpinBox, blueSpinBox *widgets.QDoubleSpinBox) {
+	h := redSpinBox.Value()
+	s := greenSpinBox.Value()
+	b := blueSpinBox.Value()
+	X, Y, Z := ConvertHsbToXYZ(h, s, b)
+	XString := strconv.FormatFloat(X, 'f', 4, 64)
+	YString := strconv.FormatFloat(Y, 'f', 4, 64)
+	ZString := strconv.FormatFloat(Z, 'f', 4, 64)
+	message := "X: "+XString+", Y: "+YString+", Z: "+ZString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func hsbToLabDialog(redSpinBox *widgets.QSpinBox, greenSpinBox, blueSpinBox *widgets.QDoubleSpinBox) {
+	h := redSpinBox.Value()
+	s := greenSpinBox.Value()
+	b := blueSpinBox.Value()
+	L, A, B := ConvertHsbToLab(h, s, b)
+	LString := strconv.FormatFloat(L, 'f', 0, 64)
+	AString := strconv.FormatFloat(A, 'f', 0, 64)
+	BString := strconv.FormatFloat(B, 'f', 0, 64)
+	message := "L: "+LString+", A: "+AString+", B: "+BString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func hsbToRGBDialog(redSpinBox *widgets.QSpinBox, greenSpinBox, blueSpinBox *widgets.QDoubleSpinBox) {
+	h := redSpinBox.Value()
+	s := greenSpinBox.Value()
+	b := blueSpinBox.Value()
+	R, G, B := ConvertHsbToRGB(h, s, b)
+	rString := strconv.FormatFloat(R, 'f', 0, 64)
+	gString := strconv.FormatFloat(G, 'f', 0, 64)
+	bString := strconv.FormatFloat(B, 'f', 0, 64)
+	message := "R: "+rString+", G: "+gString+", B: "+bString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func cmykToHsbDialog(redSpinBox, greenSpinBox, blueSpinBox, kSpinBox *widgets.QDoubleSpinBox) {
+	c := redSpinBox.Value()
+	m := greenSpinBox.Value()
+	y := blueSpinBox.Value()
+	k := kSpinBox.Value()
+	H, S, B := ConvertCMYKToHsb(c, m, y, k)
+	HString := strconv.FormatFloat(H, 'f', 0, 64)
+	SString := strconv.FormatFloat(S, 'f', 4, 64)
+	BString := strconv.FormatFloat(B, 'f', 4, 64)
+	message := "H: "+HString+", s: "+SString+", b: "+BString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func cmykToCMYDialog(redSpinBox, greenSpinBox, blueSpinBox, kSpinBox *widgets.QDoubleSpinBox) {
+	c := redSpinBox.Value()
+	m := greenSpinBox.Value()
+	y := blueSpinBox.Value()
+	k := kSpinBox.Value()
+	C, M, Y := ConvertCMYKToCMY(c, m, y, k)
+	CString := strconv.FormatFloat(C, 'f', 4, 64)
+	MString := strconv.FormatFloat(M, 'f', 4, 64)
+	YString := strconv.FormatFloat(Y, 'f', 4, 64)
+	message := "C: "+CString+", M: "+MString+", Y: "+YString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func cmykToXYZDialog(redSpinBox, greenSpinBox, blueSpinBox, kSpinBox *widgets.QDoubleSpinBox) {
+	c := redSpinBox.Value()
+	m := greenSpinBox.Value()
+	y := blueSpinBox.Value()
+	k := kSpinBox.Value()
+	X, Y, Z := ConvertCMYKToXYZ(c, m, y, k)
+	XString := strconv.FormatFloat(X, 'f', 4, 64)
+	YString := strconv.FormatFloat(Y, 'f', 4, 64)
+	ZString := strconv.FormatFloat(Z, 'f', 4, 64)
+	message := "X: "+XString+", Y: "+YString+", Z: "+ZString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func cmykToLabDialog(redSpinBox, greenSpinBox, blueSpinBox, kSpinBox *widgets.QDoubleSpinBox) {
+	c := redSpinBox.Value()
+	m := greenSpinBox.Value()
+	y := blueSpinBox.Value()
+	k := kSpinBox.Value()
+	L, A, B := ConvertCMYKToLab(c, m, y, k)
+	LString := strconv.FormatFloat(L, 'f', 0, 64)
+	AString := strconv.FormatFloat(A, 'f', 0, 64)
+	BString := strconv.FormatFloat(B, 'f', 0, 64)
+	message := "L: "+LString+", A: "+AString+", B: "+BString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func cmykToRGBDialog(redSpinBox, greenSpinBox, blueSpinBox, kSpinBox *widgets.QDoubleSpinBox) {
+	c := redSpinBox.Value()
+	m := greenSpinBox.Value()
+	y := blueSpinBox.Value()
+	k := kSpinBox.Value()
+	r, g, b := ConvertCMYKToRGB(c, m, y, k)
+	rString := strconv.FormatFloat(r, 'f', 0, 64)
+	gString := strconv.FormatFloat(g, 'f', 0, 64)
+	bString := strconv.FormatFloat(b, 'f', 0, 64)
+	message := "R: "+rString+", G: "+gString+", B: "+bString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func cmyToHsbDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QDoubleSpinBox) {
+	c := redSpinBox.Value()
+	m := greenSpinBox.Value()
+	y := blueSpinBox.Value()
+	H, S, B := ConvertCMYToHsb(c, m, y)
+	HString := strconv.FormatFloat(H, 'f', 0, 64)
+	SString := strconv.FormatFloat(S, 'f', 4, 64)
+	BString := strconv.FormatFloat(B, 'f', 4, 64)
+	message := "H: "+HString+", s: "+SString+", b: "+BString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func cmyToCMYKDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QDoubleSpinBox) {
+	c := redSpinBox.Value()
+	m := greenSpinBox.Value()
+	y := blueSpinBox.Value()
+	C, M, Y, K := ConvertCMYToCMYK(c, m, y)
+	CString := strconv.FormatFloat(C, 'f', 4, 64)
+	MString := strconv.FormatFloat(M, 'f', 4, 64)
+	YString := strconv.FormatFloat(Y, 'f', 4, 64)
+	KString := strconv.FormatFloat(K, 'f', 4, 64)
+	message := "C: "+CString+", M: "+MString+", Y: "+YString+", K: "+KString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func cmyToXYZDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QDoubleSpinBox) {
+	c := redSpinBox.Value()
+	m := greenSpinBox.Value()
+	y := blueSpinBox.Value()
+	X, Y, Z := ConvertCMYToXYZ(c, m, y)
+	XString := strconv.FormatFloat(X, 'f', 4, 64)
+	YString := strconv.FormatFloat(Y, 'f', 4, 64)
+	ZString := strconv.FormatFloat(Z, 'f', 4, 64)
+	message := "X: "+XString+", Y: "+YString+", Z: "+ZString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func cmyToLabDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QDoubleSpinBox) {
+	c := redSpinBox.Value()
+	m := greenSpinBox.Value()
+	y := blueSpinBox.Value()
+	L, A, B := ConvertCMYToLab(c, m, y)
+	LString := strconv.FormatFloat(L, 'f', 0, 64)
+	AString := strconv.FormatFloat(A, 'f', 0, 64)
+	BString := strconv.FormatFloat(B, 'f', 0, 64)
+	message := "L: "+LString+", A: "+AString+", B: "+BString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func cmyToRGBDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QDoubleSpinBox) {
+	c := redSpinBox.Value()
+	m := greenSpinBox.Value()
+	y := blueSpinBox.Value()
+	r, g, b := ConvertCMYToRGB(c, m, y)
+	rString := strconv.FormatFloat(r, 'f', 0, 64)
+	gString := strconv.FormatFloat(g, 'f', 0, 64)
+	bString := strconv.FormatFloat(b, 'f', 0, 64)
+	message := "R: "+rString+", G: "+gString+", B: "+bString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func xyzToHsbDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QDoubleSpinBox) {
+	x := redSpinBox.Value()
+	y := greenSpinBox.Value()
+	z := blueSpinBox.Value()
+	H, S, B := ConvertXYZToHsb(x, y, z)
+	HString := strconv.FormatFloat(H, 'f', 0, 64)
+	SString := strconv.FormatFloat(S, 'f', 4, 64)
+	BString := strconv.FormatFloat(B, 'f', 4, 64)
+	message := "H: "+HString+", s: "+SString+", b: "+BString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func xyzToCMYKDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QDoubleSpinBox) {
+	x := redSpinBox.Value()
+	y := greenSpinBox.Value()
+	z := blueSpinBox.Value()
+	C, M, Y, K := ConvertXYZToCMYK(x, y, z)
+	CString := strconv.FormatFloat(C, 'f', 4, 64)
+	MString := strconv.FormatFloat(M, 'f', 4, 64)
+	YString := strconv.FormatFloat(Y, 'f', 4, 64)
+	KString := strconv.FormatFloat(K, 'f', 4, 64)
+	message := "C: "+CString+", M: "+MString+", Y: "+YString+", K: "+KString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func xyzToCMYDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QDoubleSpinBox) {
+	x := redSpinBox.Value()
+	y := greenSpinBox.Value()
+	z := blueSpinBox.Value()
+	C, M, Y := ConvertXYZToCMY(x, y, z)
+	CString := strconv.FormatFloat(C, 'f', 4, 64)
+	MString := strconv.FormatFloat(M, 'f', 4, 64)
+	YString := strconv.FormatFloat(Y, 'f', 4, 64)
+	message := "C: "+CString+", M: "+MString+", Y: "+YString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func xyzToLabDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QDoubleSpinBox) {
+	x := redSpinBox.Value()
+	y := greenSpinBox.Value()
+	z := blueSpinBox.Value()
+	L, A, B := ConvertXYZToLab(x, y, z)
+	LString := strconv.FormatFloat(L, 'f', 0, 64)
+	AString := strconv.FormatFloat(A, 'f', 0, 64)
+	BString := strconv.FormatFloat(B, 'f', 0, 64)
+	message := "L: "+LString+", A: "+AString+", B: "+BString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func xyzToRGBDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QDoubleSpinBox) {
+	x := redSpinBox.Value()
+	y := greenSpinBox.Value()
+	z := blueSpinBox.Value()
+	r, g, b := ConvertXYZToRGB(x, y, z)
+	rString := strconv.FormatFloat(r, 'f', 0, 64)
+	gString := strconv.FormatFloat(g, 'f', 0, 64)
+	bString := strconv.FormatFloat(b, 'f', 0, 64)
+	message := "R: "+rString+", G: "+gString+", B: "+bString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func labToHsbDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QSpinBox) {
+	l := redSpinBox.Value()
+	a := greenSpinBox.Value()
+	b := blueSpinBox.Value()
+	H, S, B := ConvertLabToHsb(l, a, b)
+	HString := strconv.FormatFloat(H, 'f', 0, 64)
+	SString := strconv.FormatFloat(S, 'f', 4, 64)
+	BString := strconv.FormatFloat(B, 'f', 4, 64)
+	message := "H: "+HString+", s: "+SString+", b: "+BString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func labToCMYKDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QSpinBox) {
+	l := redSpinBox.Value()
+	a := greenSpinBox.Value()
+	b := blueSpinBox.Value()
+	C, M, Y, K := ConvertLabToCMYK(l, a, b)
+	CString := strconv.FormatFloat(C, 'f', 4, 64)
+	MString := strconv.FormatFloat(M, 'f', 4, 64)
+	YString := strconv.FormatFloat(Y, 'f', 4, 64)
+	KString := strconv.FormatFloat(K, 'f', 4, 64)
+	message := "C: "+CString+", M: "+MString+", Y: "+YString+", K: "+KString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func labToCMYDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QSpinBox) {
+	l := redSpinBox.Value()
+	a := greenSpinBox.Value()
+	b := blueSpinBox.Value()
+	C, M, Y := ConvertLabToCMY(l, a, b)
+	CString := strconv.FormatFloat(C, 'f', 4, 64)
+	MString := strconv.FormatFloat(M, 'f', 4, 64)
+	YString := strconv.FormatFloat(Y, 'f', 4, 64)
+	message := "C: "+CString+", M: "+MString+", Y: "+YString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func labToXYZDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QSpinBox) {
+	l := redSpinBox.Value()
+	a := greenSpinBox.Value()
+	b := blueSpinBox.Value()
+	X, Y, Z := ConvertLabToXYZ(l, a, b)
+	XString := strconv.FormatFloat(X, 'f', 4, 64)
+	YString := strconv.FormatFloat(Y, 'f', 4, 64)
+	ZString := strconv.FormatFloat(Z, 'f', 4, 64)
+	message := "X: "+XString+", Y: "+YString+", Z: "+ZString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func labToRGBDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QSpinBox) {
+	l := redSpinBox.Value()
+	a := greenSpinBox.Value()
+	b := blueSpinBox.Value()
+	R, G, B := ConvertLabToRGB(l, a, b)
+	RString := strconv.FormatFloat(R, 'f', 0, 64)
+	GString := strconv.FormatFloat(G, 'f', 0, 64)
+	BString := strconv.FormatFloat(B, 'f', 0, 64)
+	message := "R: "+RString+", G: "+GString+", B: "+BString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func backToConverterFrom(functionWindow *widgets.QMainWindow) {
+	functionWindow.Hide()
+	converterWindow.Show()
+}
+
+func openConverterFromConverter(functionWindow *widgets.QMainWindow) {
+	functionWindow.Show()
+	converterWindow.Hide()
+}
+
+func rgbToHsbDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QSpinBox) {
+	r := redSpinBox.Value()
+	g := greenSpinBox.Value()
+	b := blueSpinBox.Value()
+	H, S, B := ConvertRGBToHsb(r, g, b)
+	HString := strconv.FormatFloat(H, 'f', 0, 64)
+	SString := strconv.FormatFloat(S, 'f', 4, 64)
+	BString := strconv.FormatFloat(B, 'f', 4, 64)
+	message := "H: "+HString+", s: "+SString+", b: "+BString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func rgbToCMYKDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QSpinBox) {
+	r := redSpinBox.Value()
+	g := greenSpinBox.Value()
+	b := blueSpinBox.Value()
+	C, M, Y, K := ConvertRGBToCMYK(r, g, b)
+	CString := strconv.FormatFloat(C, 'f', 4, 64)
+	MString := strconv.FormatFloat(M, 'f', 4, 64)
+	YString := strconv.FormatFloat(Y, 'f', 4, 64)
+	KString := strconv.FormatFloat(K, 'f', 4, 64)
+	message := "C: "+CString+", M: "+MString+", Y: "+YString+", K: "+KString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func rgbToCMYDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QSpinBox) {
+	r := redSpinBox.Value()
+	g := greenSpinBox.Value()
+	b := blueSpinBox.Value()
+	C, M, Y := ConvertRGBToCMY(r, g, b)
+	CString := strconv.FormatFloat(C, 'f', 4, 64)
+	MString := strconv.FormatFloat(M, 'f', 4, 64)
+	YString := strconv.FormatFloat(Y, 'f', 4, 64)
+	message := "C: "+CString+", M: "+MString+", Y: "+YString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func rgbToXYZDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QSpinBox) {
+	r := redSpinBox.Value()
+	g := greenSpinBox.Value()
+	b := blueSpinBox.Value()
+	X, Y, Z := ConvertRGBToXYZ(r, g, b)
+	XString := strconv.FormatFloat(X, 'f', 4, 64)
+	YString := strconv.FormatFloat(Y, 'f', 4, 64)
+	ZString := strconv.FormatFloat(Z, 'f', 4, 64)
+	message := "X: "+XString+", Y: "+YString+", Z: "+ZString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+}
+
+func rgbToLabDialog(redSpinBox, greenSpinBox, blueSpinBox *widgets.QSpinBox) {
+	r := redSpinBox.Value()
+	g := greenSpinBox.Value()
+	b := blueSpinBox.Value()
+	L, A, B := ConvertRGBToLab(r, g, b)
+	LString := strconv.FormatFloat(L, 'f', 0, 64)
+	AString := strconv.FormatFloat(A, 'f', 0, 64)
+	BString := strconv.FormatFloat(B, 'f', 0, 64)
+	message := "L: "+LString+", A: "+AString+", B: "+BString
+	widgets.QMessageBox_Information(nil, "OK", message,
+	widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
 }
 
 func visualize(redSpinBox, greenSpinBox, blueSpinBox *widgets.QSpinBox) {
