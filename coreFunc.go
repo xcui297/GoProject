@@ -438,44 +438,91 @@ func MixColor(p []Pigment, weight []float64) (Paint, float64) {
  * 5.available color range
  *
  *============================================================================*/
-//MaxAndMinChannle returns the maximum R,G,B value and the minimum R,G,B value
-//of a slice of pigments
-func MaxAndMinChannle(p []Pigment)(int,int,int,int,int,int){
-  maxR := 0
-  maxG := 0
-  maxB := 0
-  minR := 255
-  minG := 255
-  minB := 255
-  for _,pigment:=range p{
-    maxR = MaxInt(pigment.R,maxR)
-    maxG = MaxInt(pigment.G,maxG)
-    maxB = MaxInt(pigment.B,maxB)
-    minR = MinInt(pigment.R,minR)
-    minG = MinInt(pigment.G,minG)
-    minB = MinInt(pigment.B,minB)
-  }
-  return maxR,maxG,maxB,minR,minG,minB
+ /*==============================================================================
+ * 4. Color range from mixing the pigments in the repository
+ *
+ *=============================================================================*/
+
+func ColorRange(repository []Pigment) [][]int {
+	//maxR,maxG,maxB,minR,minG,minB := RGBValueRange(repository)
+	AllCandidateColors := make([]Paint,0)
+	//ColorRange := make([][]int],0)
+	var candidate Paint
+	for i := minR; i <= maxR; i ++ {
+ 		for j := minG; j <= maxG; j ++ {
+ 			for k := minB; k <= maxB; k ++ {
+ 				candidate.R = i
+ 				candidate.G = j
+ 				candidate.B = k
+ 				// Serial
+ 				//exist, _, _, _ :=FindComponents(i,j,k 0.0, repository)
+ 				AllCandidateColors = append(AllCandidateColors, candidate)
+ 			}
+ 		}
+	}
+	fmt.Println(len(AllCandidateColors))
+	c := make(chan bool)
+	colorRange := make([][]int,0)
+	for _,candidate := range AllCandidateColors {
+ 		go candidate.CheckComponent(c, repository)
+	}
+	for _,candidate := range AllCandidateColors {
+     <-c
+ 		if candidate.componentFound == true {
+ 			colorRange = append(colorRange, []int{candidate.R, candidate.G, candidate.B})
+ 		}
+   }
+ 	return colorRange
 }
 
-//MaxInt takes two integers and returns the maximum
-func MaxInt(a,b int)int{
-  if a>b{
-    return a
-  }else{
-    return b
-  }
-}
+func (candidate *Paint) CheckComponent(c chan bool, repository []Pigment) {
+  r := candidate.R
+ 	g := candidate.G
+ 	b := candidate.B
+ 	exist, _, _, _ :=FindComponents(r,g,b, 0.0, repository)
+ 	if exist == true {
+ 		candidate.componentFound = true
+ 	}
+ 	c <- true
+ }
 
-//MaxInt takes two integers and returns the minimum
-func MinInt(a,b int)int{
-  if a>b{
-    return b
-  }else{
-    return a
-  }
-}
+ //MaxAndMinChannle returns the maximum R,G,B value and the minimum R,G,B value
+ //of a slice of pigments
+ func RGBValueRange(repository []Pigment) (int,int,int,int,int,int){
+   maxR := 0
+   maxG := 0
+   maxB := 0
+   minR := 255
+   minG := 255
+   minB := 255
+   for _,pigment:=range repository {
+     maxR = MaxInt(pigment.R,maxR)
+     maxG = MaxInt(pigment.G,maxG)
+     maxB = MaxInt(pigment.B,maxB)
+     minR = MinInt(pigment.R,minR)
+     minG = MinInt(pigment.G,minG)
+     minB = MinInt(pigment.B,minB)
+   }
+   return maxR,maxG,maxB,minR,minG,minB
+ }
 
+ //MaxInt takes two integers and returns the maximum
+ func MaxInt(a,b int)int{
+   if a > b {
+     return a
+   } else {
+     return b
+   }
+ }
+
+ //MaxInt takes two integers and returns the minimum
+ func MinInt(a,b int)int{
+   if a > b {
+     return b
+   } else {
+     return a
+   }
+ }
 /*==============================================================================
  * main for test
  *
