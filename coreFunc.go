@@ -1,5 +1,6 @@
 package main
-
+// #include <stdlib.h>
+import "C"
 import (
 	"os"
   "encoding/csv"
@@ -8,12 +9,11 @@ import (
   "io"
   "strings"
   "strconv"
-	"log"
-	"time"
-
 	"github.com/draffensperger/golp"
+	"unsafe"
 )
-
+// The pigments are the current colors we have in the repository that can be
+// used for mixing to get a desired new color.
 type Pigment struct {
 	name string
   ID string
@@ -29,6 +29,7 @@ type Pigment struct {
 	stock int
 }
 
+// The paint is a desired color that we want to achieve.
 type Paint struct {
 	name string
 	R int
@@ -36,8 +37,10 @@ type Paint struct {
 	B int
 	amount float64
 	price int
+	componentFound bool
 }
 
+// The components are colors required for getting a desired new color.
 type Component struct {
 	pigment *Pigment
 	percentage float64
@@ -47,9 +50,9 @@ type Component struct {
 }
 /*==============================================================================
  * 1. Load repository
- *
+ * This module reads the given .csv files and creates a slice of Pigments.
  *============================================================================*/
-// ReadFile read a given csv file and create a Pigment struct for each pigment
+// ReadFile reads a given .csv file and creates a Pigment struct for each pigment.
 func ReadFile(filename string) (bool,[]Pigment) {
   // noError reports whether the function works well
   var noError bool
@@ -71,7 +74,7 @@ func ReadFile(filename string) (bool,[]Pigment) {
 			return noError, pigments
 		}
     // Omit the heading line
-    if record[0] == "Pigment Name (string)" { ///need modification according to heading name
+    if record[0] == "Pigment Name (string)" {
       continue
     } else {
       // Remove the white space inside the name
@@ -144,17 +147,17 @@ func SpaceFieldsJoin(str string) string {
     return strings.Join(strings.Fields(str), "")
 }
 
-
 /*==============================================================================
  * 2. Mix to get the target color
- *
+ * This module tries to find the components reguired for mixing of a given target
+ * color, with a minimized price.
  *============================================================================*/
 // FindComponents uses linear programming to find pigments that can mix together
 // in certain proportion to give the targret Color.
-// It returns two boolean value indicating whether can find components from
+// It returns two boolean values indicating whether can find components in
 // the given repository and whether all components are in stock, respectively.
-// It returns a slice of those found components.
-// It also returns the final price
+// It also returns a slice of those found components and the final price of the
+// targeted color.
 func FindComponents(R, G, B int, targetAmount float64, repository []Pigment) (bool, bool, []Component, int) {
 	var targetColor Paint
 	targetColor.R = R
@@ -167,6 +170,8 @@ func FindComponents(R, G, B int, targetAmount float64, repository []Pigment) (bo
 
 // SolveLPFunc1 gives the component proportions at a minimized price when it is
 // constrained by the targeted R,G,B values and the same total unit amount.
+// It utilized a 'golp' package that coordinate C language linear programming
+// into Go programming.
 func SolveLPFunc1(targetColor Paint, repository []Pigment) ([]float64, int) {
 	// Make a new liear program structure.
 	numPigments := len(repository)
@@ -211,13 +216,18 @@ func SolveLPFunc1(targetColor Paint, repository []Pigment) ([]float64, int) {
 	// combination. We convert the minimization to a maximination by setting the
 	// coefficents of price to negative.
 	lp.SetObjFn(rowPrice)
-	vars, finalUnitPrice := SolveLP(*lp)
 
+	// It calls SolveLP to solve the linear programming.
+	vars, finalUnitPrice := SolveLP(*lp)
+	C.free(unsafe.Pointer(lp))
 	return vars, finalUnitPrice
 }
 
+// SolveLP tries to solve the given linear programming, and return the variables'
+// value at the optimal condition.
+// It also returns the value of the objective function at its minimum or maximum.
 func SolveLP(lp golp.LP) ([]float64, int) {
-	// Maximizethe objective function, restricted by constraints of lp
+	// Maximize the objective function, restricted by constraints of lp
 	lp.SetMaximize()
 
 	// Solve the linear programming.
@@ -226,6 +236,7 @@ func SolveLP(lp golp.LP) ([]float64, int) {
 	finalUnitPrice := -int(lp.Objective())
 	return vars, finalUnitPrice
 }
+
 
 // InterpretLPResults evaluates the results from linear programming and gives:
 // 1. a boolean value, which indicates the feasability to find components for the
@@ -293,8 +304,11 @@ func InterpretFunc1LPResults(vars []float64, finalUnitPrice int, targetAmount fl
 }
 /*==============================================================================
  * 3. Off-color hit
- *
+ * This module improves a current color to a desired color by adding pigments
+ * and it also ensures the use of the current color to avoid waste.
  *============================================================================*/
+ // OffColorHit calculates the pigments required to add into the a color given，
+ // in order to achieve another desired color.
  func OffColorHit(R0, G0, B0, R, G, B, currentPrice int, repository []Pigment) (bool,float64, []Component, int) {
  	var currentColor,targetColor Paint
  	currentColor.R = R0
@@ -309,7 +323,8 @@ func InterpretFunc1LPResults(vars []float64, finalUnitPrice int, targetAmount fl
  	return InterpretFunc2LPResults(vars, finalUnitPrice, repository)
  }
 
-
+// SolveLPFunc2 is the function that sets up the linear programming structure
+// for solving OffColorHit.
  func SolveLPFunc2(currentColor, targetColor Paint, repository []Pigment) ([]float64, int) {
  	// Make a new liear program structure.
  	numPigments := len(repository)
@@ -403,8 +418,106 @@ func InterpretFunc1LPResults(vars []float64, finalUnitPrice int, targetAmount fl
  	return exists, currentColorProportion, composition, finalUnitPrice
  }
 /*==============================================================================
-* 4.
-*
+* 4. Color range from mixing the pigments in the repository
+* This module can give out all the colors can get from mixing some of the
+* pigments in the repository.
+* (Since the package used to slove linear programming utilized C language,
+* the parallel programming of Go is not able to use this package. We still
+* retain the parallel version of this function, since it is too slow to
+* implement in serial, which is meaningless. )
+*=============================================================================*/
+// ColorRange gives out the color range that pigments in a given repository can
+// give.
+func ColorRange(repository []Pigment) [][]int {
+	// We narrow down the range by finding the max and min for R, G and B values.
+	maxR,maxG,maxB,minR,minG,minB := 130, 130, 130, 130, 125,120
+	AllCandidateColors := make([]Paint,0)
+	var candidate Paint
+	for i := minR; i <= maxR; i ++ {
+		for j := minG; j <= maxG; j ++ {
+			for k := minB; k <= maxB; k ++ {
+				candidate.R = i
+				candidate.G = j
+				candidate.B = k
+				AllCandidateColors = append(AllCandidateColors, candidate)
+			}
+		}
+	}
+	fmt.Println(len(AllCandidateColors))
+	c := make(chan bool)
+	colorRange := make([][]int,0)
+
+	// We call the CheckComponent for each candidate parallelly but the golp package
+	// used call functions from C language, which cannot be parallelled in Go.
+	// *** Bug still remains.
+	for _,candidate := range AllCandidateColors {
+		go candidate.CheckComponent(c, repository)
+	}
+
+	for _,candidate := range AllCandidateColors {
+    <-c
+		if candidate.componentFound == true {
+			colorRange = append(colorRange, []int{candidate.R, candidate.G, candidate.B})
+		}
+  }
+	return colorRange
+}
+
+// CheckComponent calls the FindCompnoent function.
+// It simply return a bool value to tell whether pigments in repository can mix
+// to get this candidate color.
+func (candidate *Paint) CheckComponent(c chan bool, repository []Pigment) {
+	r := candidate.R
+	g := candidate.G
+	b := candidate.B
+	exist, _, _, _ :=FindComponents(r,g,b, 0.0, repository)
+	if exist == true {
+		candidate.componentFound = true
+	}
+	c <- true
+}
+
+//MaxAndMinChannle returns the maximum R,G,B value and the minimum R,G,B value
+//of a slice of pigments
+func RGBValueRange(repository []Pigment) (int,int,int,int,int,int){
+  maxR := 0
+  maxG := 0
+  maxB := 0
+  minR := 255
+  minG := 255
+  minB := 255
+  for _,pigment:=range repository {
+    maxR = MaxInt(pigment.R,maxR)
+    maxG = MaxInt(pigment.G,maxG)
+    maxB = MaxInt(pigment.B,maxB)
+    minR = MinInt(pigment.R,minR)
+    minG = MinInt(pigment.G,minG)
+    minB = MinInt(pigment.B,minB)
+  }
+  return maxR,maxG,maxB,minR,minG,minB
+}
+
+//MaxInt takes two integers and returns the maximum
+func MaxInt(a,b int)int{
+  if a > b {
+    return a
+  } else {
+    return b
+  }
+}
+
+//MaxInt takes two integers and returns the minimum
+func MinInt(a,b int)int{
+  if a > b {
+    return b
+  } else {
+    return a
+  }
+}
+/*==============================================================================
+* 5. Mix Color
+* This function allows user to explore the color. Simply by inputing pigments
+* and proportion, they can check what color they can get.
 *=============================================================================*/
 //MixColor takes a slice of pigments and their weights
 //and returns the mixed new color, as well as the price per gal
@@ -435,98 +548,14 @@ func MixColor(p []Pigment, weight []float64) (Paint, float64) {
 }
 
 /*==============================================================================
- * 5.available color range
- *
- *============================================================================*/
- /*==============================================================================
- * 4. Color range from mixing the pigments in the repository
- *
- *=============================================================================*/
-
-func ColorRange(repository []Pigment) [][]int {
-	//maxR,maxG,maxB,minR,minG,minB := RGBValueRange(repository)
-	AllCandidateColors := make([]Paint,0)
-	//ColorRange := make([][]int],0)
-	var candidate Paint
-	for i := minR; i <= maxR; i ++ {
- 		for j := minG; j <= maxG; j ++ {
- 			for k := minB; k <= maxB; k ++ {
- 				candidate.R = i
- 				candidate.G = j
- 				candidate.B = k
- 				// Serial
- 				//exist, _, _, _ :=FindComponents(i,j,k 0.0, repository)
- 				AllCandidateColors = append(AllCandidateColors, candidate)
- 			}
- 		}
-	}
-	fmt.Println(len(AllCandidateColors))
-	c := make(chan bool)
-	colorRange := make([][]int,0)
-	for _,candidate := range AllCandidateColors {
- 		go candidate.CheckComponent(c, repository)
-	}
-	for _,candidate := range AllCandidateColors {
-     <-c
- 		if candidate.componentFound == true {
- 			colorRange = append(colorRange, []int{candidate.R, candidate.G, candidate.B})
- 		}
-   }
- 	return colorRange
-}
-
-func (candidate *Paint) CheckComponent(c chan bool, repository []Pigment) {
-  r := candidate.R
- 	g := candidate.G
- 	b := candidate.B
- 	exist, _, _, _ :=FindComponents(r,g,b, 0.0, repository)
- 	if exist == true {
- 		candidate.componentFound = true
- 	}
- 	c <- true
- }
-
- //MaxAndMinChannle returns the maximum R,G,B value and the minimum R,G,B value
- //of a slice of pigments
- func RGBValueRange(repository []Pigment) (int,int,int,int,int,int){
-   maxR := 0
-   maxG := 0
-   maxB := 0
-   minR := 255
-   minG := 255
-   minB := 255
-   for _,pigment:=range repository {
-     maxR = MaxInt(pigment.R,maxR)
-     maxG = MaxInt(pigment.G,maxG)
-     maxB = MaxInt(pigment.B,maxB)
-     minR = MinInt(pigment.R,minR)
-     minG = MinInt(pigment.G,minG)
-     minB = MinInt(pigment.B,minB)
-   }
-   return maxR,maxG,maxB,minR,minG,minB
- }
-
- //MaxInt takes two integers and returns the maximum
- func MaxInt(a,b int)int{
-   if a > b {
-     return a
-   } else {
-     return b
-   }
- }
-
- //MaxInt takes two integers and returns the minimum
- func MinInt(a,b int)int{
-   if a > b {
-     return b
-   } else {
-     return a
-   }
- }
-/*==============================================================================
  * main for test
- *
+ * Since this project will hava a main file that calls functions in this script,
+ * the main function in this scripts is commented out.
+ * However, the test serves as an important part of the build-up for this
+ * project, and it gives out results in the shell, which is easy to read and
+ * understand.
  *============================================================================*/
+ /*
 func main() {
   filename := os.Args[1]
   noError, repository := ReadFile(filename)
@@ -537,10 +566,10 @@ func main() {
 	}
 
 	//------------------test for func 1-------------------------------------------
-	R := 128
+	R := 10
 	G := 128
 	B := 128
-	targetAmount := 20.0
+	targetAmount := 15.0
 	start1 := time.Now()
 	exists, inStock, composition, finalUnitPrice := FindComponents(R, G, B, targetAmount, repository)
 	elapsed1 := time.Since(start1)
@@ -587,5 +616,12 @@ func main() {
 		pigment.name, pigment.ID, component.percentage)
 	}
 	fmt.Println("final unit price is %v", finalUnitPrice)
+	fmt.Println()
 
+	//------------------test for func 3---------------------------------------------
+	a,b,c,d,e,f := RGBValueRange(repository)
+	fmt.Println(a,b,c,d,e,f)
+	colorRange := ColorRange(repository)
+	fmt.Println(colorRange)
 }
+*/
