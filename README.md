@@ -15,6 +15,8 @@ You have to have these files from this package in your go directory:
 2. coreFunc.go
 3. drawCar.go
 4. convertColor.go
+5. draw.go
+6. canvas.go
 
 Run go build and then you can execute the executable file!
 

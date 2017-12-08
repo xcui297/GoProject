@@ -1536,9 +1536,6 @@ func mixColor(redSpinBox, greenSpinBox, blueSpinBox *widgets.QSpinBox, quantityS
 		exists, inStock, composition, _:= FindComponents(targetR, targetG, targetB, quantityRequired, repository)
 		// Show the results dialog
 		ShowMixColorDialog(exists, inStock, composition)
-		targetRstring := strconv.FormatBool(exists)
-		widgets.QMessageBox_Information(nil, "OK", targetRstring,
-		widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
 		//CreateMixColorOutputWindow(func1Exists, func1InStock, func1Composition)
 		//mixColorOutputWindow.Show()
 		//mixColorWindow.Hide()
