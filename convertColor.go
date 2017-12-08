@@ -39,10 +39,10 @@ func ConvertRGBToXYZ(R,G,B int) (float64,float64,float64) {
 //and return the corresponding float64 X,Y,Z values
 //You can apply D65 white point by uncommenting the commented code.
 func convertRGBToXYZ(R,G,B float64) (float64,float64,float64) {
-  R = Gramma(R/255)
-  G = Gramma(G/255)
-  B = Gramma(B/255)
-  //Adobe RGB
+  R = Gamma(R/255)
+  G = Gamma(G/255)
+  B = Gamma(B/255)
+  //sRGB
   X := R * 0.433910 + G * 0.376220 + B * 0.189860
   Y := R * 0.212649 + G * 0.715169 + B * 0.072182
   Z := R * 0.017756 + G * 0.109478 + B * 0.872915
@@ -205,9 +205,9 @@ func ConvertHsbToRGB(h int,s,b float64) (float64,float64,float64) {
   return R*255,G*255,B*255
 }
 
-//VerseGramma is the inverse function of Gramma
+//VerseGamma is the inverse function of Gamma
 //which is used in ConvertXYZToRGB
-func VerseGramma(x float64) float64{
+func VerseGamma(x float64) float64{
   if x > 0.00313{
     return math.Pow(x,1/2.4)*1.055-0.055
   }else{
@@ -222,9 +222,9 @@ func ConvertXYZToRGB(X,Y,Z float64) (float64,float64,float64){
   R := 3.240479 * X - 1.537150 * Y - 0.498535 * Z
   G := -0.969256 * X + 1.875992 * Y + 0.041556 * Z
   B := 0.055648 * X - 0.204043 * Y + 1.057311 * Z
-  R = LimitInRange(VerseGramma(R),0,1)
-  G = LimitInRange(VerseGramma(G),0,1)
-  B = LimitInRange(VerseGramma(B),0,1)
+  R = LimitInRange(VerseGamma(R),0,1)
+  G = LimitInRange(VerseGamma(G),0,1)
+  B = LimitInRange(VerseGamma(B),0,1)
   return R*255,G*255,B*255
 }
 
@@ -447,8 +447,8 @@ func FunctionXYZ(t float64) float64{
   }
 }
 
-//Gramma is the function used when convert RGB space into XYZ space
-func Gramma(x float64) float64{
+//Gamma is the function used when convert RGB space into XYZ space
+func Gamma(x float64) float64{
   if x > 0.04045{
     return math.Pow((x+0.055)/1.055,2.4)
   }else{
